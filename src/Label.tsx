@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   use,
   type ChangeEventHandler,
@@ -15,27 +16,40 @@ function LabelSvg({
   onChange,
   align,
   font,
+  fontSize,
 }: {
   text: string;
   onChange: (svg: string, width: number, height: number) => void;
   align: AlignmentType;
   font: string;
+  fontSize: number;
 }) {
   const ref = useRef<SVGSVGElement>(null);
+  const textRef = useRef<SVGTextElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
 
-  useEffect(() => {
-    if (ref.current) {
-      const textElement = ref.current.getElementById(
-        "labelText",
-      ) as SVGTextElement;
-      const bbox = textElement.getBoundingClientRect();
-      setWidth(bbox.width);
-      setHeight(Math.max(bbox.height, textElement.clientHeight));
-      onChange(ref.current.outerHTML, bbox.width, bbox.height);
+  useLayoutEffect(() => {
+    if (!ref.current || !textRef.current) return;
+    const bbox = textRef.current.getBBox();
+    const newWidth = Math.ceil(bbox.width);
+    const newHeight = Math.ceil(bbox.height);
+
+    const safeWidth = Math.max(1, newWidth);
+    const safeHeight = Math.max(1, newHeight);
+
+    if (width !== safeWidth || height !== safeHeight) {
+      setWidth(safeWidth);
+      setHeight(safeHeight);
     }
-  }, [text, width, height, align, font]);
+
+    // Update attributes to match the measured box
+    ref.current.setAttribute("width", safeWidth.toString());
+    ref.current.setAttribute("height", safeHeight.toString());
+    ref.current.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+
+    onChange(ref.current.outerHTML, safeWidth, safeHeight);
+  }, [text, align, font, fontSize, width, height]);
 
   const [xPos, textAnchor] = ((): [number, "start" | "middle" | "end"] => {
     switch (align) {
@@ -51,20 +65,33 @@ function LabelSvg({
   })();
 
   return (
-    <div style={{ visibility: "hidden", position: "absolute" }}>
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        opacity: 0,
+        pointerEvents: "none",
+      }}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width={width}
-        height={height}
-        viewBox={`0, 0, ${width} ${height}`}
+        width={width || 1}
+        height={height || 1}
+        viewBox={`${0} 0 ${width || 1} ${height || 1}`}
         ref={ref}
-        style={{ width: width, height: height }}
+        style={{ width: width || 1, height: height || 1 }}
       >
         <text
           x={xPos}
           y="0"
           id="labelText"
-          style={{ textAnchor: textAnchor, fontFamily: font }}
+          ref={textRef}
+          style={{
+            textAnchor: textAnchor,
+            fontFamily: font,
+            fontSize: `${fontSize}px`,
+          }}
         >
           {text.split("\n").map((x, i) => (
             <tspan key={i} x={xPos} dy="1em">
@@ -81,19 +108,21 @@ function LabelCanvas({
   text,
   align,
   font,
+  fontSize,
   length,
   onChangeBitmap,
 }: {
   text: string;
   align: AlignmentType;
   font: string;
+  fontSize: number;
   length: number | null;
   onChangeBitmap: (x: ImageData) => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   const [svgData, setSvgData] = useState<string>("");
-  const [width, setWidth] = useState<number>(384);
+  const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
 
   const onSvgChange = (s: string, w: number, h: number) => {
@@ -103,61 +132,67 @@ function LabelCanvas({
   };
 
   useEffect(() => {
-    const image = new Image();
-
-    if (ref.current) {
-      const context = ref.current.getContext("2d");
-      if (!context) throw new Error("No context from canvas");
-      image.onload = () => {
-        if (ref.current) {
-          context.clearRect(0, 0, ref.current.width, ref.current.height);
-          const svgAspect = width / height;
-          const canvasAspect = ref.current.width / ref.current.height;
-          if (!length) {
-            // Size is set to auto
-            context.drawImage(
-              image,
-              0,
-              0,
-              ref.current.width,
-              ref.current.height,
-            );
-          } else if (svgAspect > canvasAspect) {
-            // Content has wider aspect ratio, so center vertically
-            const virtualHeight = (ref.current.width / width) * height;
-            const offset = (ref.current.height - virtualHeight) / 2;
-            context.drawImage(
-              image,
-              0,
-              offset,
-              ref.current.width,
-              virtualHeight,
-            );
-          } else {
-            // Content has taller aspect ratio.  Position based on align prop.
-            const virtualWidth = (ref.current.height / height) * width;
-            const offset =
-              align == "left"
-                ? 0
-                : (ref.current.width - virtualWidth) /
-                  (align == "right" ? 1 : 2);
-            context.drawImage(
-              image,
-              offset,
-              0,
-              virtualWidth,
-              ref.current.height,
-            );
-          }
-          onChangeBitmap(
-            context.getImageData(0, 0, ref.current.width, ref.current.height),
-          );
-        }
-      };
-
-      image.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
+    if (!svgData || !width || !height || !ref.current) {
+      return;
     }
-  }, [svgData, length]);
+
+    let isCurrent = true;
+    const image = new Image();
+    const context = ref.current.getContext("2d");
+    if (!context) throw new Error("No context from canvas");
+
+    const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    image.onload = () => {
+      if (!isCurrent || !ref.current) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      context.clearRect(0, 0, ref.current.width, ref.current.height);
+      const canvasWidth = ref.current.width;
+      const canvasHeight = ref.current.height;
+
+      let xOffset = 0;
+      if (align === "center") {
+        xOffset = (canvasWidth - width) / 2;
+      } else if (align === "right") {
+        xOffset = canvasWidth - width;
+      }
+
+      let yOffset = 0;
+      if (length && height < canvasHeight) {
+        yOffset = (canvasHeight - height) / 2;
+      }
+
+      context.drawImage(
+        image,
+        xOffset,
+        yOffset,
+        width,
+        height,
+      );
+
+      onChangeBitmap(
+        context.getImageData(0, 0, canvasWidth, canvasHeight),
+      );
+      URL.revokeObjectURL(url);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+    };
+
+    image.src = url;
+
+    return () => {
+      isCurrent = false;
+      image.onload = null;
+      image.onerror = null;
+      URL.revokeObjectURL(url);
+    };
+  }, [svgData, length, align, width, height]);
 
   return (
     <>
@@ -166,6 +201,7 @@ function LabelCanvas({
         onChange={(s, w, h) => onSvgChange(s, w, h)}
         align={align}
         font={font}
+        fontSize={fontSize}
       />
       <div
         style={{
@@ -179,8 +215,8 @@ function LabelCanvas({
       >
         <canvas
           ref={ref}
-          width="384"
-          height={length || 384 * (height / width)}
+          width={384}
+          height={length || (height > 0 ? height : 1)}
           style={{
             margin: 0,
             backgroundColor: "white",
@@ -253,6 +289,38 @@ function FontSelect({
   );
 }
 
+function FontSizeSelect({
+  fontSize,
+  setFontSize,
+}: {
+  fontSize: number;
+  setFontSize: (x: number) => void;
+}) {
+  return (
+    <label>
+      Font size:
+      <select
+        value={fontSize}
+        onChange={(e) => setFontSize(parseInt(e.target.value, 10))}
+      >
+        <option value={6}>6px</option>
+        <option value={8}>8px</option>
+        <option value={10}>10px</option>
+        <option value={12}>12px</option>
+        <option value={14}>14px</option>
+        <option value={16}>16px</option>
+        <option value={18}>18px</option>
+        <option value={20}>20px</option>
+        <option value={24}>24px</option>
+        <option value={28}>28px</option>
+        <option value={32}>32px</option>
+        <option value={36}>36px</option>
+        <option value={40}>40px</option>
+      </select>
+    </label>
+  );
+}
+
 function TextAlign({
   align,
   setAlign,
@@ -294,6 +362,7 @@ export function LabelMaker() {
   const [align, setAlign] = useState<"left" | "center" | "right">("left");
   const [bitmap, setBitmap] = useState<ImageData>();
   const [font, setFont] = useState<string>("sans-serif");
+  const [fontSize, setFontSize] = useState<number>(24);
   const [length, setLength] = useState<number | null>(null);
 
   const { printer, printerStatus } = use(PrinterContext);
@@ -310,12 +379,14 @@ export function LabelMaker() {
         text={text}
         align={align}
         font={font}
+        fontSize={fontSize}
         length={length}
         onChangeBitmap={(x: ImageData) => setBitmap(x)}
       />
       <div>
         <TextAlign align={align} setAlign={setAlign} />
         <FontSelect font={font} setFont={setFont} />
+        <FontSizeSelect fontSize={fontSize} setFontSize={setFontSize} />
         <LengthSelect length={length} setLength={setLength} />
         <div>
           <textarea
