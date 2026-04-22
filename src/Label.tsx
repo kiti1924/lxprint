@@ -204,24 +204,29 @@ function LabelCanvas({
         fontSize={fontSize}
       />
       <div
+        className="canvas-wrapper"
         style={{
-          border: "1px solid black",
-          paddingTop: "64px",
-          paddingBottom: "20px",
-          paddingLeft: "32px",
-          paddingRight: "32px",
-          backgroundColor: "lightgrey",
+          background: "rgba(255, 255, 255, 0.03)",
+          padding: "30px",
+          borderRadius: "24px",
+          border: "1px solid rgba(255, 255, 255, 0.05)",
+          display: "flex",
+          justifyContent: "center",
+          marginBottom: "20px"
         }}
       >
-        <canvas
-          ref={ref}
-          width={384}
-          height={length || (height > 0 ? height : 1)}
-          style={{
-            margin: 0,
-            backgroundColor: "white",
-          }}
-        />
+        <div className="canvas-container">
+          <canvas
+            ref={ref}
+            width={384}
+            height={length || (height > 0 ? height : 1)}
+            style={{
+              margin: 0,
+              backgroundColor: "white",
+              display: "block"
+            }}
+          />
+        </div>
       </div>
     </>
   );
@@ -374,7 +379,7 @@ export function LabelMaker() {
   };
 
   return (
-    <div style={{ clear: "both" }}>
+    <div className="label-maker">
       <LabelCanvas
         text={text}
         align={align}
@@ -383,22 +388,28 @@ export function LabelMaker() {
         length={length}
         onChangeBitmap={(x: ImageData) => setBitmap(x)}
       />
-      <div>
-        <TextAlign align={align} setAlign={setAlign} />
-        <FontSelect font={font} setFont={setFont} />
-        <FontSizeSelect fontSize={fontSize} setFontSize={setFontSize} />
-        <LengthSelect length={length} setLength={setLength} />
-        <div>
+      <div className="label-maker-controls">
+        <div className="control-group">
+          <TextAlign align={align} setAlign={setAlign} />
+        </div>
+        <div className="control-group">
+          <FontSelect font={font} setFont={setFont} />
+          <FontSizeSelect fontSize={fontSize} setFontSize={setFontSize} />
+          <LengthSelect length={length} setLength={setLength} />
+        </div>
+        <div className="text-input-group">
           <textarea
             value={text}
             onChange={(x) => setText(x.target.value)}
             rows={4}
-            cols={40}
+            placeholder="Type your label text here..."
           />
         </div>
-        <button onClick={print} disabled={!canPrint}>
-          Print
-        </button>
+        <div className="actions" style={{ textAlign: 'center', marginTop: '10px' }}>
+          <button className="print-button" onClick={print} disabled={!canPrint}>
+            {printerStatus.state === "printing" ? "Printing..." : "Print Label"}
+          </button>
+        </div>
       </div>
     </div>
   );
