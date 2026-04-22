@@ -294,7 +294,7 @@ function FontSelect({
   );
 }
 
-function FontSizeSelect({
+function FontSizeInput({
   fontSize,
   setFontSize,
 }: {
@@ -304,24 +304,14 @@ function FontSizeSelect({
   return (
     <label>
       Font size:
-      <select
+      <input
+        type="number"
         value={fontSize}
-        onChange={(e) => setFontSize(parseInt(e.target.value, 10))}
-      >
-        <option value={6}>6px</option>
-        <option value={8}>8px</option>
-        <option value={10}>10px</option>
-        <option value={12}>12px</option>
-        <option value={14}>14px</option>
-        <option value={16}>16px</option>
-        <option value={18}>18px</option>
-        <option value={20}>20px</option>
-        <option value={24}>24px</option>
-        <option value={28}>28px</option>
-        <option value={32}>32px</option>
-        <option value={36}>36px</option>
-        <option value={40}>40px</option>
-      </select>
+        onChange={(e) => setFontSize(parseInt(e.target.value, 10) || 0)}
+        min="1"
+        max="200"
+      />
+      px
     </label>
   );
 }
@@ -394,7 +384,7 @@ export function LabelMaker() {
         </div>
         <div className="control-group">
           <FontSelect font={font} setFont={setFont} />
-          <FontSizeSelect fontSize={fontSize} setFontSize={setFontSize} />
+          <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} />
           <LengthSelect length={length} setLength={setLength} />
         </div>
         <div className="text-input-group">
