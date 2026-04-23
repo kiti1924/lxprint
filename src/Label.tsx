@@ -3,7 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
-  use,
+  useContext,
   type ChangeEventHandler,
 } from "react";
 
@@ -17,88 +17,89 @@ function LabelSvg({
   align,
   font,
   fontSize,
+  direction,
 }: {
   text: string;
   onChange: (svg: string, width: number, height: number) => void;
   align: AlignmentType;
   font: string;
   fontSize: number;
+  direction: "horizontal" | "vertical";
 }) {
   const ref = useRef<SVGSVGElement>(null);
-  const textRef = useRef<SVGTextElement>(null);
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
+  const gRef = useRef<SVGGElement>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  const lines = text.split("\n");
+  const isVertical = direction === "vertical";
+  const lineSpacing = 1.2;
+  const step = fontSize * lineSpacing;
 
   useLayoutEffect(() => {
-    if (!ref.current || !textRef.current) return;
-    const bbox = textRef.current.getBBox();
-    const newWidth = Math.ceil(bbox.width);
-    const newHeight = Math.ceil(bbox.height);
+    if (!ref.current || !gRef.current) return;
+    
+    // Initial measurement
+    const bbox = gRef.current.getBBox();
+    const padding = 2;
+    const newW = Math.max(1, Math.ceil(bbox.width + padding * 2));
+    const newH = Math.max(1, Math.ceil(bbox.height + padding * 2));
 
-    const safeWidth = Math.max(1, newWidth);
-    const safeHeight = Math.max(1, newHeight);
+    // Update the SVG attributes directly to avoid re-render loop
+    ref.current.setAttribute("width", newW.toString());
+    ref.current.setAttribute("height", newH.toString());
+    ref.current.setAttribute("viewBox", `${bbox.x - padding} ${bbox.y - padding} ${newW} ${newH}`);
 
-    if (width !== safeWidth || height !== safeHeight) {
-      setWidth(safeWidth);
-      setHeight(safeHeight);
+    if (size.w !== newW || size.h !== newH) {
+      setSize({ w: newW, h: newH });
     }
 
-    // Update attributes to match the measured box
-    ref.current.setAttribute("width", safeWidth.toString());
-    ref.current.setAttribute("height", safeHeight.toString());
-    ref.current.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
-
-    onChange(ref.current.outerHTML, safeWidth, safeHeight);
-  }, [text, align, font, fontSize, width, height]);
-
-  const [xPos, textAnchor] = ((): [number, "start" | "middle" | "end"] => {
-    switch (align) {
-      case "left":
-        return [0, "start"];
-      case "center":
-        return [width / 2, "middle"];
-      case "right":
-        return [width, "end"];
-      default:
-        return [0, "start"];
-    }
-  })();
+    onChange(ref.current.outerHTML, newW, newH);
+  }, [text, align, font, fontSize, direction]);
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        opacity: 0,
-        pointerEvents: "none",
-      }}
-    >
+    <div style={{ position: "absolute", top: 0, left: 0, opacity: 0, pointerEvents: "none" }}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width={width || 1}
-        height={height || 1}
-        viewBox={`${0} 0 ${width || 1} ${height || 1}`}
         ref={ref}
-        style={{ width: width || 1, height: height || 1 }}
       >
-        <text
-          x={xPos}
-          y="0"
-          id="labelText"
-          ref={textRef}
-          style={{
-            textAnchor: textAnchor,
-            fontFamily: font,
-            fontSize: `${fontSize}px`,
-          }}
-        >
-          {text.split("\n").map((x, i) => (
-            <tspan key={i} x={xPos} dy="1em">
-              {x}
-            </tspan>
-          ))}
-        </text>
+        <g ref={gRef}>
+          {lines.map((line, i) => {
+
+            // Text Positioning
+            let x = 0;
+            let y = 0;
+            let anchor = "start";
+
+            if (isVertical) {
+              x = -i * step;
+              anchor = "middle";
+              if (align === "left") y = 0;
+              else if (align === "center") y = 500; // Large arbitrary middle
+              else y = 1000;
+            } else {
+              y = (i + 1) * step - (step - fontSize) / 2;
+              if (align === "left") { x = 0; anchor = "start"; }
+              else if (align === "center") { x = 500; anchor = "middle"; }
+              else { x = 1000; anchor = "end"; }
+            }
+
+            return (
+              <text
+                key={i}
+                x={x}
+                y={y}
+                style={{
+                  textAnchor: anchor as any,
+                  fontFamily: font,
+                  fontSize: `${fontSize}px`,
+                  writingMode: isVertical ? "vertical-rl" : "horizontal-tb",
+                }}
+              >
+                {line}
+              </text>
+            );
+          })}
+        </g>
       </svg>
     </div>
   );
@@ -110,6 +111,7 @@ function LabelCanvas({
   font,
   fontSize,
   length,
+  direction,
   onChangeBitmap,
 }: {
   text: string;
@@ -117,6 +119,7 @@ function LabelCanvas({
   font: string;
   fontSize: number;
   length: number | null;
+  direction: "horizontal" | "vertical";
   onChangeBitmap: (x: ImageData) => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -132,13 +135,11 @@ function LabelCanvas({
   };
 
   useEffect(() => {
-    if (!svgData || !width || !height || !ref.current) {
-      return;
-    }
+    if (!svgData || !width || !height || !ref.current) return;
 
     let isCurrent = true;
     const image = new Image();
-    const context = ref.current.getContext("2d");
+    const context = ref.current.getContext("2d", { willReadFrequently: true });
     if (!context) throw new Error("No context from canvas");
 
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -166,30 +167,16 @@ function LabelCanvas({
         yOffset = (canvasHeight - height) / 2;
       }
 
-      context.drawImage(
-        image,
-        xOffset,
-        yOffset,
-        width,
-        height,
-      );
-
-      onChangeBitmap(
-        context.getImageData(0, 0, canvasWidth, canvasHeight),
-      );
+      context.drawImage(image, xOffset, yOffset, width, height);
+      onChangeBitmap(context.getImageData(0, 0, canvasWidth, canvasHeight));
       URL.revokeObjectURL(url);
     };
 
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-    };
-
+    image.onerror = () => URL.revokeObjectURL(url);
     image.src = url;
 
     return () => {
       isCurrent = false;
-      image.onload = null;
-      image.onerror = null;
       URL.revokeObjectURL(url);
     };
   }, [svgData, length, align, width, height]);
@@ -198,33 +185,19 @@ function LabelCanvas({
     <>
       <LabelSvg
         text={text}
-        onChange={(s, w, h) => onSvgChange(s, w, h)}
+        onChange={onSvgChange}
         align={align}
         font={font}
         fontSize={fontSize}
+        direction={direction}
       />
-      <div
-        className="canvas-wrapper"
-        style={{
-          background: "rgba(255, 255, 255, 0.03)",
-          padding: "30px",
-          borderRadius: "24px",
-          border: "1px solid rgba(255, 255, 255, 0.05)",
-          display: "flex",
-          justifyContent: "center",
-          marginBottom: "20px"
-        }}
-      >
+      <div className="canvas-wrapper">
         <div className="canvas-container">
           <canvas
             ref={ref}
             width={384}
             height={length || (height > 0 ? height : 1)}
-            style={{
-              margin: 0,
-              backgroundColor: "white",
-              display: "block"
-            }}
+            style={{ margin: 0, backgroundColor: "white", display: "block" }}
           />
         </div>
       </div>
@@ -265,7 +238,7 @@ function LengthSelect({
   length: number | null;
   setLength: (x: number | null) => void;
 }) {
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
   return (
     <select
       value={length || "auto"}
@@ -322,7 +295,7 @@ function FontSizeInput({
   setFontSize: (x: number) => void;
   advanced: boolean;
 }) {
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
   const standardSizes = [12, 16, 20, 24, 32, 48, 64, 80, 96, 128];
 
   if (!advanced) {
@@ -366,7 +339,7 @@ function TextAlign({
   align: AlignmentType;
   setAlign: (x: AlignmentType) => void;
 }) {
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
   const onOptionChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     if (align === "left" || align === "center" || align === "right")
       setAlign(e.target.value as AlignmentType);
@@ -406,6 +379,7 @@ export function LabelMaker() {
     const val = localStorage.getItem("label_length");
     return val ? parseInt(val, 10) : null;
   });
+  const [direction, setDirection] = useState<"horizontal" | "vertical">(() => (localStorage.getItem("label_direction") as any) || "horizontal");
   const [showDetailed, setShowDetailed] = useState(false);
   const [advancedFontSize, setAdvancedFontSize] = useState(() => localStorage.getItem("label_advancedFontSize") === "true");
   const [advancedFonts, setAdvancedFonts] = useState(() => localStorage.getItem("label_advancedFonts") === "true");
@@ -435,6 +409,10 @@ export function LabelMaker() {
   }, [length]);
 
   useEffect(() => {
+    localStorage.setItem("label_direction", direction);
+  }, [direction]);
+
+  useEffect(() => {
     localStorage.setItem("label_advancedFontSize", advancedFontSize.toString());
   }, [advancedFontSize]);
 
@@ -450,7 +428,7 @@ export function LabelMaker() {
     printerKeepAlive, 
     setPrinterKeepAlive,
     t
-  } = use(PrinterContext);
+  } = useContext(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state == "connected" && !!bitmap;
 
@@ -466,6 +444,7 @@ export function LabelMaker() {
         font={font}
         fontSize={fontSize}
         length={length}
+        direction={direction}
         onChangeBitmap={(x: ImageData) => setBitmap(x)}
       />
       <div className="label-maker-controls">
@@ -545,7 +524,7 @@ export function LabelMaker() {
                     {t('advancedFontSize')}
                   </label>
                 </div>
-                <div>
+                <div style={{ marginBottom: '10px' }}>
                   <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
                     <input 
                       type="checkbox" 
@@ -554,6 +533,19 @@ export function LabelMaker() {
                     />
                     {t('advancedFonts')}
                   </label>
+                </div>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{t('direction')}:</span>
+                  <div className="orientation-toggle" style={{ padding: '3px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', gap: '4px' }}>
+                    <label style={{ cursor: 'pointer', padding: '4px 10px', borderRadius: '6px', background: direction === 'horizontal' ? '#646cff' : 'transparent', fontSize: '0.85em' }}>
+                      <input type="radio" name="direction" value="horizontal" checked={direction === 'horizontal'} onChange={() => setDirection('horizontal')} style={{ display: 'none' }} />
+                      {t('horizontal')}
+                    </label>
+                    <label style={{ cursor: 'pointer', padding: '4px 10px', borderRadius: '6px', background: direction === 'vertical' ? '#646cff' : 'transparent', fontSize: '0.85em' }}>
+                      <input type="radio" name="direction" value="vertical" checked={direction === 'vertical'} onChange={() => setDirection('vertical')} style={{ display: 'none' }} />
+                      {t('vertical')}
+                    </label>
+                  </div>
                 </div>
               </div>
             )}

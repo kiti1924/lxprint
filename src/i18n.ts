@@ -40,6 +40,10 @@ export const translations = {
     version: "Version",
     advancedFontSize: "Enable advanced font size (Numeric input)",
     advancedFonts: "Enable advanced font options (Japanese fonts, etc.)",
+    advancedOrientation: "Enable writing direction settings (Horizontal/Vertical)",
+    direction: "Direction",
+    horizontal: "Horizontal",
+    vertical: "Vertical",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -80,5 +84,9 @@ export const translations = {
     version: "バージョン",
     advancedFontSize: "詳細なフォントサイズ設定を有効にする (数値入力)",
     advancedFonts: "高度なフォント設定を有効にする (明朝・ゴシック等)",
+    advancedOrientation: "書き方向の設定を有効にする (縦書き・横書き)",
+    direction: "方向",
+    horizontal: "横書き",
+    vertical: "縦書き",
   }
 };

@@ -1,4 +1,4 @@
-import { useState, useRef, use, useEffect } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { PrinterContext } from "./context.tsx";
 
 export function PhotoMaker() {
@@ -26,7 +26,7 @@ export function PhotoMaker() {
     printerKeepAlive,
     setPrinterKeepAlive,
     t
-  } = use(PrinterContext);
+  } = useContext(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state === "connected" && !!bitmap;
 

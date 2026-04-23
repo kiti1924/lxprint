@@ -1,4 +1,4 @@
-import { useState, use } from 'react'
+import { useState, useContext } from 'react'
 import './App.css'
 
 import { PrinterContextProvider, PrinterContext } from './context.tsx';
@@ -9,7 +9,7 @@ import { PhotoMaker } from './Photo'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<'label' | 'photo'>('label');
-  const { language, setLanguage, t } = use(PrinterContext);
+  const { language, setLanguage, t } = useContext(PrinterContext);
 
   return (
     <div className="app-container">

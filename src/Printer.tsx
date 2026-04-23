@@ -1,4 +1,4 @@
-import { use, useState } from "react";
+import { useContext, useState } from "react";
 import "core-js/proposals/array-buffer-base64";
 
 import { type PrinterStatus } from "./lib/printer.ts";
@@ -42,7 +42,7 @@ function Battery({ level, charging }: { level?: number; charging?: boolean }) {
 }
 
 function ConnectedState({ state }: { state?: string }) {
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
   switch (state) {
     case "connected":
       return `✔️ ${t('connected')}`;
@@ -83,7 +83,7 @@ function ConnectButton({
   disconnect: () => void;
 }) {
   const [driver, setDriver] = useState(drivers()[0]);
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
 
   if (state && ["connected", "connecting", "printing"].includes(state))
     return (
@@ -101,7 +101,7 @@ function ConnectButton({
 }
 
 function LXPrinter({ status }: { status: LXPrinterStatus }) {
-  const { t } = use(PrinterContext);
+  const { t } = useContext(PrinterContext);
   return (
     <>
       <div style={{ float: "left", padding: "5px" }}>
@@ -143,7 +143,7 @@ function Status({
 }
 
 function Printer() {
-  const { printer, printerStatus, errors, connect, t } = use(PrinterContext);
+  const { printer, printerStatus, errors, connect, t } = useContext(PrinterContext);
 
   const disconnect = async () => {
     return await printer?.disconnect();
