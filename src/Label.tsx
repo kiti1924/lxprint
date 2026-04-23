@@ -269,13 +269,13 @@ function TextAlignButton({
       style={{
         flex: 1,
         textAlign: 'center',
-        padding: '8px 12px',
+        padding: '6px 0',
         cursor: 'pointer',
         fontSize: '0.85em',
         fontWeight: active ? 600 : 400,
         color: active ? '#fff' : 'rgba(255,255,255,0.5)',
         background: active ? '#646cff' : 'transparent',
-        borderRadius: '8px',
+        borderRadius: '6px',
         transition: 'all 0.2s ease',
         userSelect: 'none',
         display: 'flex',
@@ -314,28 +314,14 @@ function TextAlign({
       display: 'flex',
       background: 'rgba(0,0,0,0.3)',
       padding: '4px',
-      borderRadius: '10px',
+      borderRadius: '8px',
       border: '1px solid rgba(255,255,255,0.1)',
-      width: '240px'
+      flex: 1,
+      maxWidth: '220px'
     }}>
-      <TextAlignButton
-        val="left"
-        text={t('alignLeft')}
-        align={align}
-        onChangeHandler={onChangeHandler}
-      />
-      <TextAlignButton
-        val="center"
-        text={t('alignCenter')}
-        align={align}
-        onChangeHandler={onChangeHandler}
-      />
-      <TextAlignButton
-        val="right"
-        text={t('alignRight')}
-        align={align}
-        onChangeHandler={onChangeHandler}
-      />
+      <TextAlignButton val="left" text={t('alignLeft')} align={align} onChangeHandler={onChangeHandler} />
+      <TextAlignButton val="center" text={t('alignCenter')} align={align} onChangeHandler={onChangeHandler} />
+      <TextAlignButton val="right" text={t('alignRight')} align={align} onChangeHandler={onChangeHandler} />
     </div>
   );
 }
@@ -354,14 +340,15 @@ function LengthSelect({
       onChange={(e) => setLength(parseInt(e.target.value) || null)}
       style={{
         padding: '8px 12px',
-        borderRadius: '10px',
+        borderRadius: '8px',
         background: 'rgba(255,255,255,0.05)',
         border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff',
         fontSize: '0.9em',
         cursor: 'pointer',
         outline: 'none',
-        width: '120px'
+        flex: 1,
+        maxWidth: '220px'
       }}
     >
       <option value="auto">{t('auto')}</option>
@@ -381,18 +368,9 @@ function FontSelect({
 }) {
   const fonts = advanced
     ? [
-        "Yu Mincho",
-        "Yu Gothic",
-        "Meiryo",
-        "MS Mincho",
-        "MS Gothic",
-        "Arial",
-        "Times New Roman",
-        "Courier New",
-        "Georgia",
-        "Verdana",
-        "Trebuchet MS",
-        "Impact",
+        "Yu Mincho", "Yu Gothic", "Meiryo", "MS Mincho", "MS Gothic",
+        "Arial", "Times New Roman", "Courier New", "Georgia",
+        "Verdana", "Trebuchet MS", "Impact",
       ]
     : ["Yu Mincho", "Yu Gothic", "Meiryo", "Arial", "Times New Roman"];
 
@@ -402,14 +380,15 @@ function FontSelect({
       onChange={(e) => setFont(e.target.value)}
       style={{
         padding: '8px 12px',
-        borderRadius: '10px',
+        borderRadius: '8px',
         background: 'rgba(255,255,255,0.05)',
         border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff',
         fontSize: '0.9em',
         cursor: 'pointer',
         outline: 'none',
-        minWidth: '160px'
+        flex: 1,
+        maxWidth: '220px'
       }}
     >
       {fonts.map((f) => (
@@ -434,25 +413,25 @@ function FontSizeInput({
     ? [12, 16, 20, 24, 32, 48, 64, 80, 96, 128, 160, 200]
     : [24, 32, 48, 64, 80, 128];
 
-  // Always include the current fontSize if it's not in the list
   const sizes = baseSizes.includes(fontSize) 
     ? baseSizes 
     : [...baseSizes, fontSize].sort((a, b) => a - b);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '220px', justifyContent: 'flex-end' }}>
       <select 
         value={fontSize} 
         onChange={(e) => setFontSize(parseInt(e.target.value))}
         style={{
           padding: '8px 12px',
-          borderRadius: '10px',
+          borderRadius: '8px',
           background: 'rgba(255,255,255,0.05)',
           border: '1px solid rgba(255,255,255,0.1)',
           color: '#fff',
           fontSize: '0.9em',
           cursor: 'pointer',
-          outline: 'none'
+          outline: 'none',
+          flex: 1
         }}
       >
         {sizes.map((s) => (
@@ -461,7 +440,7 @@ function FontSizeInput({
           </option>
         ))}
       </select>
-      <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.5)' }}>px</span>
+      <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.5)', width: '20px', textAlign: 'right' }}>px</span>
     </div>
   );
 }
@@ -480,6 +459,7 @@ export function LabelMaker() {
   const [showDetailed, setShowDetailed] = useState(false);
   const [advancedFontSize, setAdvancedFontSize] = useState(() => localStorage.getItem("label_advancedFontSize") === "true");
   const [advancedFonts, setAdvancedFonts] = useState(() => localStorage.getItem("label_advancedFonts") === "true");
+  
   const [autoShrink, setAutoShrink] = useState(() => localStorage.getItem("label_autoShrink") === "true");
   const [autoExpand, setAutoExpand] = useState(() => localStorage.getItem("label_autoExpand") === "true");
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -561,98 +541,109 @@ export function LabelMaker() {
           </div>
         )}
       </div>
+
       <div className="label-maker-controls" style={{ 
-        border: isOverflowing && !autoShrink ? '2px solid #ff4d4d' : 'none',
+        border: isOverflowing && !autoShrink ? '2px solid #ff4d4d' : '1px solid rgba(255,255,255,0.05)',
         borderRadius: '16px',
         transition: 'all 0.3s ease',
         display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: '20px 32px',
-        padding: '12px 20px',
+        flexDirection: 'column',
+        gap: '16px',
+        padding: '20px',
         background: 'rgba(255, 255, 255, 0.03)',
-        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05)',
+        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.02), 0 4px 12px rgba(0,0,0,0.1)',
         backdropFilter: 'blur(10px)',
-        margin: '10px 0'
+        margin: '15px 0'
       }}>
-        {/* Layout Group */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {t('direction')}
-          </span>
-          <TextAlign align={align} setAlign={setAlign} />
-        </div>
-
-        {/* Length Group */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {t('length')}
-          </span>
-          <LengthSelect length={length} setLength={setLength} />
-        </div>
-
-        {/* Font Group */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 auto' }}>
-          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {t('fontFamily')} / {t('fontSize')}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-            <FontSelect font={font} setFont={setFont} advanced={advancedFonts} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} advanced={advancedFontSize} />
-              
-              {/* Auto Shrink Toggle */}
-              <label style={{ 
-                cursor: "pointer", 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "6px", 
-                fontSize: '0.8em',
-                background: autoShrink ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                border: autoShrink ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-                color: autoShrink ? '#fff' : 'rgba(255,255,255,0.6)'
-              }}>
-                <input 
-                  type="checkbox" 
-                  checked={autoShrink} 
-                  onChange={(e) => setAutoShrink(e.target.checked)} 
-                  style={{ cursor: 'pointer', margin: 0 }}
-                />
-                {t('autoShrink')}
-              </label>
-
-              {/* Auto Expand Toggle */}
-              <label style={{ 
-                cursor: "pointer", 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "6px", 
-                fontSize: '0.8em',
-                background: autoExpand ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                border: autoExpand ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-                color: autoExpand ? '#fff' : 'rgba(255,255,255,0.6)'
-              }}>
-                <input 
-                  type="checkbox" 
-                  checked={autoExpand} 
-                  onChange={(e) => setAutoExpand(e.target.checked)} 
-                  style={{ cursor: 'pointer', margin: 0 }}
-                />
-                {t('autoExpand')}
-              </label>
-            </div>
+        
+        {/* Layout Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {t('direction')}
+            </span>
+            <TextAlign align={align} setAlign={setAlign} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {t('length')}
+            </span>
+            <LengthSelect length={length} setLength={setLength} />
           </div>
         </div>
+
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+        {/* Font Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {t('fontFamily')}
+            </span>
+            <FontSelect font={font} setFont={setFont} advanced={advancedFonts} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {t('fontSize')}
+            </span>
+            <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} advanced={advancedFontSize} />
+          </div>
+        </div>
+
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+        {/* Toggles Section */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <label style={{ 
+            flex: 1,
+            cursor: "pointer", 
+            display: "flex", 
+            justifyContent: "center",
+            alignItems: "center", 
+            gap: "8px", 
+            fontSize: '0.8em',
+            background: autoShrink ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+            padding: '8px',
+            borderRadius: '10px',
+            border: autoShrink ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
+            transition: 'all 0.2s ease',
+            color: autoShrink ? '#fff' : 'rgba(255,255,255,0.6)'
+          }}>
+            <input 
+              type="checkbox" 
+              checked={autoShrink} 
+              onChange={(e) => setAutoShrink(e.target.checked)} 
+              style={{ cursor: 'pointer', margin: 0 }}
+            />
+            {t('autoShrink')}
+          </label>
+
+          <label style={{ 
+            flex: 1,
+            cursor: "pointer", 
+            display: "flex", 
+            justifyContent: "center",
+            alignItems: "center", 
+            gap: "8px", 
+            fontSize: '0.8em',
+            background: autoExpand ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+            padding: '8px',
+            borderRadius: '10px',
+            border: autoExpand ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
+            transition: 'all 0.2s ease',
+            color: autoExpand ? '#fff' : 'rgba(255,255,255,0.6)'
+          }}>
+            <input 
+              type="checkbox" 
+              checked={autoExpand} 
+              onChange={(e) => setAutoExpand(e.target.checked)} 
+              style={{ cursor: 'pointer', margin: 0 }}
+            />
+            {t('autoExpand')}
+          </label>
+        </div>
       </div>
-        <div className="text-input-group">
+      <div className="text-input-group">
           <textarea
             value={text}
             onChange={(x) => setText(x.target.value)}
