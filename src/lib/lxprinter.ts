@@ -3,6 +3,10 @@ import "core-js/proposals/array-buffer-base64";
 import { BitmapData } from "./bitmap.ts";
 import { Printer, type PrinterStatus, PrinterErrorEvent } from "./printer.ts";
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function crc16xmodem(data: Uint8Array): number {
   return data.reduce((crc: number, x: number) => {
     crc ^= x << 8;
@@ -301,7 +305,10 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
     await this.sendChar?.writeValueWithoutResponse(msg);
 
     for (const line of this.printingImage.generatePrintData()) {
+      if (this.status.state !== "printing") break;
       await this.sendChar?.writeValueWithoutResponse(line);
+      // Small delay to prevent buffer overflow on the printer side
+      await delay(15);
     }
 
     const lastLine = new Uint8Array(100);

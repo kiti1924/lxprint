@@ -71,14 +71,32 @@ export function PhotoMaker() {
     }
 
     const targetWidth = 384;
-    const targetHeight = Math.round((srcH / srcW) * targetWidth);
+    let targetHeight = Math.round((srcH / srcW) * targetWidth);
+
+    // Safeguard to prevent astronomical heights that crash the browser or printer
+    const MAX_HEIGHT = 8000;
+    let drawW = targetWidth;
+    let drawH = targetHeight;
+    let offsetX = 0;
+
+    if (targetHeight > MAX_HEIGHT) {
+      drawH = MAX_HEIGHT;
+      drawW = Math.round((srcW / srcH) * drawH);
+      targetHeight = MAX_HEIGHT;
+      offsetX = Math.floor((targetWidth - drawW) / 2);
+    }
+
     canvas.width = targetWidth;
     canvas.height = targetHeight;
+
+    // Fill with white (transparent will be treated as white by processImage)
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.drawImage(
       image,
       srcX, srcY, srcW, srcH,
-      0, 0, targetWidth, targetHeight
+      offsetX, 0, drawW, drawH
     );
     const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
     
