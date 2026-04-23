@@ -265,12 +265,13 @@ function LengthSelect({
   length: number | null;
   setLength: (x: number | null) => void;
 }) {
+  const { t } = use(PrinterContext);
   return (
     <select
       value={length || "auto"}
       onChange={(e) => setLength(parseInt(e.target.value) || null)}
     >
-      <option value="auto">Auto</option>
+      <option value="auto">{t('auto')}</option>
       <option value="230">28mm</option>
     </select>
   );
@@ -301,9 +302,10 @@ function FontSizeInput({
   fontSize: number;
   setFontSize: (x: number) => void;
 }) {
+  const { t } = use(PrinterContext);
   return (
     <label>
-      Font size:
+      {t('fontSize')}:
       <input
         type="number"
         value={fontSize}
@@ -323,6 +325,7 @@ function TextAlign({
   align: AlignmentType;
   setAlign: (x: AlignmentType) => void;
 }) {
+  const { t } = use(PrinterContext);
   const onOptionChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     if (align === "left" || align === "center" || align === "right")
       setAlign(e.target.value as AlignmentType);
@@ -332,19 +335,19 @@ function TextAlign({
     <div>
       <TextAlignButton
         val="left"
-        text="Left"
+        text={t('alignLeft')}
         align={align}
         onChangeHandler={onOptionChange}
       />
       <TextAlignButton
         val="center"
-        text="Center"
+        text={t('alignCenter')}
         align={align}
         onChangeHandler={onOptionChange}
       />
       <TextAlignButton
         val="right"
-        text="Right"
+        text={t('alignRight')}
         align={align}
         onChangeHandler={onOptionChange}
       />
@@ -394,7 +397,8 @@ export function LabelMaker() {
     browserKeepAlive, 
     setBrowserKeepAlive, 
     printerKeepAlive, 
-    setPrinterKeepAlive 
+    setPrinterKeepAlive,
+    t
   } = use(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state == "connected" && !!bitmap;
@@ -427,12 +431,12 @@ export function LabelMaker() {
             value={text}
             onChange={(x) => setText(x.target.value)}
             rows={4}
-            placeholder="Type your label text here..."
+            placeholder={t('typeTextHere')}
           />
         </div>
         <div className="actions" style={{ textAlign: 'center', marginTop: '10px' }}>
           <button className="print-button" onClick={print} disabled={!canPrint}>
-            {printerStatus.state === "printing" ? "Printing..." : "Print Label"}
+            {printerStatus.state === "printing" ? t('printingStatus') : t('printLabel')}
           </button>
           
           <div style={{ marginTop: '15px' }}>
@@ -448,7 +452,7 @@ export function LabelMaker() {
                 textDecoration: 'underline'
               }}
             >
-              {showDetailed ? "詳細設定を隠す" : "詳細設定 (詳細オプション)"}
+              {showDetailed ? t('hideDetailedOptions') : t('detailedOptions')}
             </button>
             
             {showDetailed && (
@@ -467,7 +471,7 @@ export function LabelMaker() {
                       checked={browserKeepAlive} 
                       onChange={(e) => setBrowserKeepAlive(e.target.checked)} 
                     />
-                    ブラウザのスリープ防止 (画面を点灯したままにする)
+                    {t('browserKeepAlive')}
                   </label>
                 </div>
                 <div>
@@ -477,7 +481,7 @@ export function LabelMaker() {
                       checked={printerKeepAlive} 
                       onChange={(e) => setPrinterKeepAlive(e.target.checked)} 
                     />
-                    プリンターのスリープ防止 (自動電源オフを防ぐ)
+                    {t('printerKeepAlive')}
                   </label>
                 </div>
               </div>

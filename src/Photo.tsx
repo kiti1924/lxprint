@@ -24,7 +24,8 @@ export function PhotoMaker() {
     browserKeepAlive,
     setBrowserKeepAlive,
     printerKeepAlive,
-    setPrinterKeepAlive
+    setPrinterKeepAlive,
+    t
   } = use(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state === "connected" && !!bitmap;
@@ -105,7 +106,7 @@ export function PhotoMaker() {
           className="select-button" 
           onClick={() => fileInputRef.current?.click()}
         >
-          <span className="icon">📷</span> Select Photo
+          <span className="icon">📷</span> {t('selectPhoto')}
         </button>
         {image && (
           <div className="options-group">
@@ -115,16 +116,16 @@ export function PhotoMaker() {
                 checked={autoTrim} 
                 onChange={(e) => setAutoTrim(e.target.checked)} 
               />
-              Auto Trim (Margins)
+              {t('autoTrim')}
             </label>
             <div className="process-select-group">
-              <label>Method:</label>
+              <label>{t('processingMethod')}:</label>
               <select 
                 value={processingMethod} 
                 onChange={(e) => setProcessingMethod(e.target.value as "dithering" | "threshold")}
               >
-                <option value="dithering">Dithering (Floyd-Steinberg)</option>
-                <option value="threshold">Threshold (Black & White)</option>
+                <option value="dithering">{t('dithering')}</option>
+                <option value="threshold">{t('threshold')}</option>
               </select>
             </div>
           </div>
@@ -133,7 +134,7 @@ export function PhotoMaker() {
 
       {image && (
         <div className="preview-section">
-          <h3>{processingMethod === "dithering" ? "Dithered Preview" : "Threshold Preview"}</h3>
+          <h3>{processingMethod === "dithering" ? t('ditheredPreview') : t('thresholdPreview')}</h3>
           <div className="canvas-container">
             <canvas ref={canvasRef} />
           </div>
@@ -143,7 +144,7 @@ export function PhotoMaker() {
               onClick={print} 
               disabled={!canPrint}
             >
-              {printerStatus.state === "printing" ? "Printing..." : "Print Photo"}
+              {printerStatus.state === "printing" ? t('printingStatus') : t('printPhoto')}
             </button>
 
             <div style={{ marginTop: '15px' }}>
@@ -159,7 +160,7 @@ export function PhotoMaker() {
                   textDecoration: 'underline'
                 }}
               >
-                {showDetailed ? "詳細設定を隠す" : "詳細設定 (詳細オプション)"}
+                {showDetailed ? t('hideDetailedOptions') : t('detailedOptions')}
               </button>
               
               {showDetailed && (
@@ -178,7 +179,7 @@ export function PhotoMaker() {
                         checked={browserKeepAlive} 
                         onChange={(e) => setBrowserKeepAlive(e.target.checked)} 
                       />
-                      ブラウザのスリープ防止 (画面を点灯したままにする)
+                      {t('browserKeepAlive')}
                     </label>
                   </div>
                   <div>
@@ -188,7 +189,7 @@ export function PhotoMaker() {
                         checked={printerKeepAlive} 
                         onChange={(e) => setPrinterKeepAlive(e.target.checked)} 
                       />
-                      プリンターのスリープ防止 (自動電源オフを防ぐ)
+                      {t('printerKeepAlive')}
                     </label>
                   </div>
                 </div>

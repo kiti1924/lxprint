@@ -13,6 +13,8 @@ import {
 } from "./lib/printer.ts";
 import { connect } from "./lib/drivers.ts";
 
+import { translations, type Language } from "./i18n.ts";
+
 export type PrinterContextType = {
   printer?: Printer;
   // setPrinter: Dispatch<SetStateAction<Printer | undefined>>;
@@ -24,6 +26,9 @@ export type PrinterContextType = {
   setBrowserKeepAlive: (val: boolean) => void;
   printerKeepAlive: boolean;
   setPrinterKeepAlive: (val: boolean) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: keyof typeof translations.en) => string;
 };
 
 export const PrinterContext = createContext<PrinterContextType>(
@@ -40,6 +45,15 @@ export const PrinterContextProvider: React.FC<{
   const [errors, setErrors] = useState<string[]>([]);
   const [browserKeepAlive, setBrowserKeepAlive] = useState(() => localStorage.getItem("browser_keep_alive") === "true");
   const [printerKeepAlive, setPrinterKeepAlive] = useState(() => localStorage.getItem("printer_keep_alive") === "true");
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem("language") as Language) || "en");
+
+  useEffect(() => {
+    localStorage.setItem("language", language);
+  }, [language]);
+
+  const t = (key: keyof typeof translations.en): string => {
+    return translations[language][key] || translations.en[key];
+  };
 
   useEffect(() => {
     localStorage.setItem("browser_keep_alive", browserKeepAlive.toString());
@@ -108,7 +122,10 @@ export const PrinterContextProvider: React.FC<{
         browserKeepAlive, 
         setBrowserKeepAlive, 
         printerKeepAlive, 
-        setPrinterKeepAlive 
+        setPrinterKeepAlive,
+        language,
+        setLanguage,
+        t
       }}
     >
       {children}
