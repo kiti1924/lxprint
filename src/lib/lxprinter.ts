@@ -290,6 +290,37 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
       new Uint8Array([0x5a, 0x04, printlen >> 8, printlen & 0xff, 0x01, 0x00]),
     );
 
+    await delay(200); // Wait for printer to finalize
+    this.setStatus({ state: "connected" });
+  }
+
+  async feed(mm: number) {
+    if (mm <= 0) return;
+    this.setStatus({ state: "printing" });
+    const pixels = Math.round(mm * 8);
+    const lines = Math.ceil(pixels / 2); // 2 lines per packet
+
+    const msg = new Uint8Array(6);
+    const dv = new DataView(msg.buffer);
+    msg.set([0x5a, 0x04]);
+    dv.setUint16(2, lines + 1);
+    await this.sendChar?.writeValueWithoutResponse(msg);
+
+    for (let i = 0; i < lines; i++) {
+      if (this.status.state !== "printing") break;
+      const line = new Uint8Array(100);
+      const ldv = new DataView(line.buffer);
+      ldv.setUint8(0, 0x55);
+      ldv.setUint16(1, i);
+      await this.sendChar?.writeValueWithoutResponse(line);
+      await delay(30);
+    }
+
+    const lastLine = new Uint8Array(100);
+    lastLine.set([0x55, lines >> 8, lines & 0xff]);
+    await this.sendChar?.writeValueWithoutResponse(lastLine);
+    
+    await delay(200);
     this.setStatus({ state: "connected" });
   }
 
@@ -308,7 +339,7 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
       if (this.status.state !== "printing") break;
       await this.sendChar?.writeValueWithoutResponse(line);
       // Small delay to prevent buffer overflow on the printer side
-      await delay(15);
+      await delay(30);
     }
 
     const lastLine = new Uint8Array(100);

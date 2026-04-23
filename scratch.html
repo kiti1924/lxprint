@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.font = '24px "Yu Mincho", "Yu Gothic", "Meiryo", sans-serif';
+  const text = "Name: John  Event: C107  Time: 10:00";
+  const metrics = ctx.measureText(text);
+  document.body.innerHTML = "Width: " + metrics.width;
+  console.log("Width:", metrics.width);
+</script>
+</body>
+</html>
