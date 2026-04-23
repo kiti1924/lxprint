@@ -280,17 +280,35 @@ function LengthSelect({
 function FontSelect({
   font,
   setFont,
+  advanced,
 }: {
   font: string;
   setFont: (x: string) => void;
+  advanced: boolean;
 }) {
   return (
     <select value={font} onChange={(e) => setFont(e.target.value)}>
-      <option value="serif">serif</option>
-      <option value="sans-serif">sans-serif</option>
-      <option value="cursive">cursive</option>
-      <option value="monospace">monospace</option>
-      <option value="fantasy">fantasy</option>
+      {/* Standard 5 Fonts */}
+      <option value='Arial, Helvetica, sans-serif'>Arial</option>
+      <option value='"Times New Roman", Times, serif'>Times New Roman</option>
+      <option value='"Courier New", Courier, monospace'>Courier New</option>
+      <option value='"Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'>Yu Gothic</option>
+      <option value='"Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS PMincho", serif'>Yu Mincho</option>
+
+      {/* Advanced Fonts */}
+      {advanced && (
+        <>
+          <option value='Verdana, Geneva, sans-serif'>Verdana</option>
+          <option value='Tahoma, Geneva, sans-serif'>Tahoma</option>
+          <option value='Impact, Charcoal, sans-serif'>Impact</option>
+          <option value='Georgia, serif'>Georgia</option>
+          <option value='"Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'>Gothic</option>
+          <option value='"Hiragino Mincho ProN", "MS PMincho", serif'>Mincho</option>
+          <option value='"Meiryo", sans-serif'>Meiryo</option>
+          <option value='cursive'>Cursive</option>
+          <option value='fantasy'>Fantasy</option>
+        </>
+      )}
     </select>
   );
 }
@@ -298,11 +316,34 @@ function FontSelect({
 function FontSizeInput({
   fontSize,
   setFontSize,
+  advanced,
 }: {
   fontSize: number;
   setFontSize: (x: number) => void;
+  advanced: boolean;
 }) {
   const { t } = use(PrinterContext);
+  const standardSizes = [12, 16, 20, 24, 32, 48, 64, 80, 96, 128];
+
+  if (!advanced) {
+    return (
+      <label>
+        {t('fontSize')}:
+        <select 
+          value={fontSize} 
+          onChange={(e) => setFontSize(parseInt(e.target.value, 10))}
+          style={{ width: 'auto' }}
+        >
+          {!standardSizes.includes(fontSize) && <option value={fontSize}>{fontSize}</option>}
+          {standardSizes.map(size => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+        px
+      </label>
+    );
+  }
+
   return (
     <label>
       {t('fontSize')}:
@@ -366,6 +407,8 @@ export function LabelMaker() {
     return val ? parseInt(val, 10) : null;
   });
   const [showDetailed, setShowDetailed] = useState(false);
+  const [advancedFontSize, setAdvancedFontSize] = useState(() => localStorage.getItem("label_advancedFontSize") === "true");
+  const [advancedFonts, setAdvancedFonts] = useState(() => localStorage.getItem("label_advancedFonts") === "true");
 
   useEffect(() => {
     localStorage.setItem("label_text", text);
@@ -390,6 +433,14 @@ export function LabelMaker() {
       localStorage.removeItem("label_length");
     }
   }, [length]);
+
+  useEffect(() => {
+    localStorage.setItem("label_advancedFontSize", advancedFontSize.toString());
+  }, [advancedFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem("label_advancedFonts", advancedFonts.toString());
+  }, [advancedFonts]);
 
   const { 
     printer, 
@@ -422,8 +473,8 @@ export function LabelMaker() {
           <TextAlign align={align} setAlign={setAlign} />
         </div>
         <div className="control-group">
-          <FontSelect font={font} setFont={setFont} />
-          <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} />
+          <FontSelect font={font} setFont={setFont} advanced={advancedFonts} />
+          <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} advanced={advancedFontSize} />
           <LengthSelect length={length} setLength={setLength} />
         </div>
         <div className="text-input-group">
@@ -474,7 +525,7 @@ export function LabelMaker() {
                     {t('browserKeepAlive')}
                   </label>
                 </div>
-                <div>
+                <div style={{ marginBottom: '10px' }}>
                   <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
                     <input 
                       type="checkbox" 
@@ -482,6 +533,26 @@ export function LabelMaker() {
                       onChange={(e) => setPrinterKeepAlive(e.target.checked)} 
                     />
                     {t('printerKeepAlive')}
+                  </label>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
+                      checked={advancedFontSize} 
+                      onChange={(e) => setAdvancedFontSize(e.target.checked)} 
+                    />
+                    {t('advancedFontSize')}
+                  </label>
+                </div>
+                <div>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
+                      checked={advancedFonts} 
+                      onChange={(e) => setAdvancedFonts(e.target.checked)} 
+                    />
+                    {t('advancedFonts')}
                   </label>
                 </div>
               </div>

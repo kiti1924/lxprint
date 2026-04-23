@@ -38,6 +38,8 @@ export const translations = {
     lowBattery: "Low Battery",
     overheat: "Overheat",
     version: "Version",
+    advancedFontSize: "Enable advanced font size (Numeric input)",
+    advancedFonts: "Enable advanced font options (Japanese fonts, etc.)",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -76,5 +78,7 @@ export const translations = {
     lowBattery: "電池残量少",
     overheat: "本体過熱",
     version: "バージョン",
+    advancedFontSize: "詳細なフォントサイズ設定を有効にする (数値入力)",
+    advancedFonts: "高度なフォント設定を有効にする (明朝・ゴシック等)",
   }
 };
