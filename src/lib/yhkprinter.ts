@@ -136,4 +136,18 @@ export class YHKPrinter extends Printer<YHKPrinterStatus> {
 
     this.setStatus({ state: "connected" });
   }
+
+  async feed(mm: number) {
+    if (mm <= 0) return;
+    this.setStatus({ state: "printing" });
+    const dots = Math.round(mm * 8);
+    // Max dots per command is 255 (ESC J n)
+    let remaining = dots;
+    while (remaining > 0) {
+      const chunk = Math.min(remaining, 255);
+      await this.cmdWithoutResponse(new Uint8Array([0x1b, 0x4a, chunk]));
+      remaining -= chunk;
+    }
+    this.setStatus({ state: "connected" });
+  }
 }

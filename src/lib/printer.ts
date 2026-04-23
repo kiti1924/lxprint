@@ -5,6 +5,7 @@ export abstract class Printer<
   abstract connect(): Promise<void>;
   abstract disconnect(): Promise<void>;
   abstract print(img: ImageData): Promise<void>;
+  abstract feed(mm: number): Promise<void>;
   abstract status: TStatus;
   abstract name: string | undefined;
   abstract set printerKeepAlive(val: boolean);
