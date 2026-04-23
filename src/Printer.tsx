@@ -151,15 +151,15 @@ function Printer() {
 
   return (
     <>
-      <div style={{ padding: "10px" }}>
-        <div style={{ padding: "5px", float: "right" }}>
+      <div className="printer-status-area">
+        <div className="printer-controls">
           <ConnectButton
             state={printerStatus?.state}
             connect={connect}
             disconnect={disconnect}
           />
         </div>
-        <div style={{ padding: "5px", width: "100%", textAlign: "left" }}>
+        <div className="printer-info">
           <ConnectedState state={printerStatus.state} />
           {" "}
           {printer?.name || t('noPrinter')}

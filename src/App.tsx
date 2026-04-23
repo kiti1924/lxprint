@@ -14,7 +14,7 @@ function AppContent() {
   return (
     <div className="app-container">
       <header>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="header-top">
           <h1>{t('appTitle')}</h1>
           <div className="language-switcher" style={{ display: 'flex', gap: '5px' }}>
             <button 
