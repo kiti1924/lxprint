@@ -70,15 +70,19 @@ export const PrinterContextProvider: React.FC<{
   useEffect(() => {
     if (!browserKeepAlive) return;
 
+    if (!('wakeLock' in navigator)) {
+      setBrowserKeepAlive(false);
+      return;
+    }
+
     let wakeLock: any = null;
     const requestWakeLock = async () => {
       try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await (navigator as any).wakeLock.request('screen');
-          console.log('Wake Lock is active');
-        }
+        wakeLock = await (navigator as any).wakeLock.request('screen');
+        console.log('Wake Lock is active');
       } catch (err: any) {
         console.error(`${err.name}, ${err.message}`);
+        setBrowserKeepAlive(false);
       }
     };
 

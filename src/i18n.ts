@@ -44,6 +44,10 @@ export const translations = {
     direction: "Direction",
     horizontal: "Horizontal",
     vertical: "Vertical",
+    autoShrink: "Auto-shrink font to fit width",
+    autoExpand: "Maximize to fit",
+    overflowWarning: "Text exceeds label width!",
+    wakeLockNotSupported: "Screen Wake Lock is not supported in this environment (needs HTTPS or localhost).",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -69,7 +73,7 @@ export const translations = {
     threshold: "しきい値 (白黒はっきり)",
     fontSize: "フォントサイズ",
     fontFamily: "フォント",
-    length: "ラベル長",
+    length: "印刷の長さ (余白の調整)",
     alignLeft: "左寄せ",
     alignCenter: "中央",
     alignRight: "右寄せ",
@@ -88,5 +92,9 @@ export const translations = {
     direction: "方向",
     horizontal: "横書き",
     vertical: "縦書き",
+    autoShrink: "幅に合わせてフォントを自動縮小",
+    autoExpand: "幅に合わせて最大化",
+    overflowWarning: "テキストがラベル幅を超えています！",
+    wakeLockNotSupported: "この環境ではスリープ防止機能を使用できません（HTTPS接続が必要です）。",
   }
 };

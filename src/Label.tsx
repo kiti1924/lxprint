@@ -14,17 +14,25 @@ type AlignmentType = "left" | "center" | "right";
 function LabelSvg({
   text,
   onChange,
+  onOverflow,
+  onScaleChange,
   align,
   font,
   fontSize,
   direction,
+  autoShrink,
+  autoExpand,
 }: {
   text: string;
   onChange: (svg: string, width: number, height: number) => void;
+  onOverflow: (overflowing: boolean) => void;
+  onScaleChange?: (scale: number) => void;
   align: AlignmentType;
   font: string;
   fontSize: number;
   direction: "horizontal" | "vertical";
+  autoShrink: boolean;
+  autoExpand: boolean;
 }) {
   const ref = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -38,23 +46,49 @@ function LabelSvg({
   useLayoutEffect(() => {
     if (!ref.current || !gRef.current) return;
     
-    // Initial measurement
     const bbox = gRef.current.getBBox();
     const padding = 2;
-    const newW = Math.max(1, Math.ceil(bbox.width + padding * 2));
-    const newH = Math.max(1, Math.ceil(bbox.height + padding * 2));
+    const realW = bbox.width + padding * 2;
+    const realH = bbox.height + padding * 2;
 
-    // Update the SVG attributes directly to avoid re-render loop
-    ref.current.setAttribute("width", newW.toString());
-    ref.current.setAttribute("height", newH.toString());
-    ref.current.setAttribute("viewBox", `${bbox.x - padding} ${bbox.y - padding} ${newW} ${newH}`);
+    const maxW = 384;
+    let scale = 1;
+    let finalW = Math.max(1, Math.ceil(realW));
+    let finalH = Math.max(1, Math.ceil(realH));
 
-    if (size.w !== newW || size.h !== newH) {
-      setSize({ w: newW, h: newH });
+    const isOverflowing = realW > maxW;
+    onOverflow(isOverflowing);
+
+    if (autoShrink && isOverflowing) {
+      scale = maxW / realW;
+      finalW = maxW;
+      finalH = Math.ceil(realH * scale);
+      
+      if (onScaleChange && scale < 0.99) {
+        setTimeout(() => onScaleChange(scale), 0);
+      }
+    } else if (autoExpand && !isOverflowing && realW > 0) {
+      scale = maxW / realW;
+      if (onScaleChange && scale > 1.01) {
+        setTimeout(() => onScaleChange(scale), 0);
+      }
     }
 
-    onChange(ref.current.outerHTML, newW, newH);
-  }, [text, align, font, fontSize, direction]);
+    ref.current.setAttribute("width", finalW.toString());
+    ref.current.setAttribute("height", finalH.toString());
+    
+    if (autoShrink && isOverflowing) {
+      ref.current.setAttribute("viewBox", `${bbox.x - padding} ${bbox.y - padding} ${realW} ${realH}`);
+    } else {
+      ref.current.setAttribute("viewBox", `${bbox.x - padding} ${bbox.y - padding} ${finalW} ${finalH}`);
+    }
+
+    if (size.w !== finalW || size.h !== finalH) {
+      setSize({ w: finalW, h: finalH });
+    }
+
+    onChange(ref.current.outerHTML, finalW, finalH);
+  }, [text, align, font, fontSize, direction, autoShrink, autoExpand]);
 
   return (
     <div style={{ position: "absolute", top: 0, left: 0, opacity: 0, pointerEvents: "none" }}>
@@ -112,6 +146,10 @@ function LabelCanvas({
   fontSize,
   length,
   direction,
+  autoShrink,
+  autoExpand,
+  onOverflow,
+  onScaleChange,
   onChangeBitmap,
 }: {
   text: string;
@@ -120,6 +158,10 @@ function LabelCanvas({
   fontSize: number;
   length: number | null;
   direction: "horizontal" | "vertical";
+  autoShrink: boolean;
+  autoExpand: boolean;
+  onOverflow: (overflowing: boolean) => void;
+  onScaleChange?: (scale: number) => void;
   onChangeBitmap: (x: ImageData) => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -186,10 +228,14 @@ function LabelCanvas({
       <LabelSvg
         text={text}
         onChange={onSvgChange}
+        onOverflow={onOverflow}
+        onScaleChange={onScaleChange}
         align={align}
         font={font}
         fontSize={fontSize}
         direction={direction}
+        autoShrink={autoShrink}
+        autoExpand={autoExpand}
       />
       <div className="canvas-wrapper">
         <div className="canvas-container">
@@ -216,18 +262,81 @@ function TextAlignButton({
   align: AlignmentType;
   onChangeHandler: ChangeEventHandler<HTMLInputElement>;
 }) {
+  const active = align === val;
   return (
-    <label htmlFor={val}>
+    <label 
+      htmlFor={val}
+      style={{
+        flex: 1,
+        textAlign: 'center',
+        padding: '8px 12px',
+        cursor: 'pointer',
+        fontSize: '0.85em',
+        fontWeight: active ? 600 : 400,
+        color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+        background: active ? '#646cff' : 'transparent',
+        borderRadius: '8px',
+        transition: 'all 0.2s ease',
+        userSelect: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
       <input
         type="radio"
         name="align"
         value={val}
         id={val}
-        checked={align === val}
+        checked={active}
         onChange={onChangeHandler}
+        style={{ display: 'none' }}
       />
       {text}
     </label>
+  );
+}
+
+function TextAlign({
+  align,
+  setAlign,
+}: {
+  align: AlignmentType;
+  setAlign: (x: AlignmentType) => void;
+}) {
+  const { t } = useContext(PrinterContext);
+  const onChangeHandler: ChangeEventHandler<HTMLInputElement> = (e) => {
+    setAlign(e.target.value as AlignmentType);
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      background: 'rgba(0,0,0,0.3)',
+      padding: '4px',
+      borderRadius: '10px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      width: '240px'
+    }}>
+      <TextAlignButton
+        val="left"
+        text={t('alignLeft')}
+        align={align}
+        onChangeHandler={onChangeHandler}
+      />
+      <TextAlignButton
+        val="center"
+        text={t('alignCenter')}
+        align={align}
+        onChangeHandler={onChangeHandler}
+      />
+      <TextAlignButton
+        val="right"
+        text={t('alignRight')}
+        align={align}
+        onChangeHandler={onChangeHandler}
+      />
+    </div>
   );
 }
 
@@ -243,6 +352,17 @@ function LengthSelect({
     <select
       value={length || "auto"}
       onChange={(e) => setLength(parseInt(e.target.value) || null)}
+      style={{
+        padding: '8px 12px',
+        borderRadius: '10px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        color: '#fff',
+        fontSize: '0.9em',
+        cursor: 'pointer',
+        outline: 'none',
+        width: '120px'
+      }}
     >
       <option value="auto">{t('auto')}</option>
       <option value="230">28mm</option>
@@ -259,29 +379,44 @@ function FontSelect({
   setFont: (x: string) => void;
   advanced: boolean;
 }) {
-  return (
-    <select value={font} onChange={(e) => setFont(e.target.value)}>
-      {/* Standard 5 Fonts */}
-      <option value='Arial, Helvetica, sans-serif'>Arial</option>
-      <option value='"Times New Roman", Times, serif'>Times New Roman</option>
-      <option value='"Courier New", Courier, monospace'>Courier New</option>
-      <option value='"Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'>Yu Gothic</option>
-      <option value='"Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS PMincho", serif'>Yu Mincho</option>
+  const fonts = advanced
+    ? [
+        "Yu Mincho",
+        "Yu Gothic",
+        "Meiryo",
+        "MS Mincho",
+        "MS Gothic",
+        "Arial",
+        "Times New Roman",
+        "Courier New",
+        "Georgia",
+        "Verdana",
+        "Trebuchet MS",
+        "Impact",
+      ]
+    : ["Yu Mincho", "Yu Gothic", "Meiryo", "Arial", "Times New Roman"];
 
-      {/* Advanced Fonts */}
-      {advanced && (
-        <>
-          <option value='Verdana, Geneva, sans-serif'>Verdana</option>
-          <option value='Tahoma, Geneva, sans-serif'>Tahoma</option>
-          <option value='Impact, Charcoal, sans-serif'>Impact</option>
-          <option value='Georgia, serif'>Georgia</option>
-          <option value='"Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'>Gothic</option>
-          <option value='"Hiragino Mincho ProN", "MS PMincho", serif'>Mincho</option>
-          <option value='"Meiryo", sans-serif'>Meiryo</option>
-          <option value='cursive'>Cursive</option>
-          <option value='fantasy'>Fantasy</option>
-        </>
-      )}
+  return (
+    <select 
+      value={font} 
+      onChange={(e) => setFont(e.target.value)}
+      style={{
+        padding: '8px 12px',
+        borderRadius: '10px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        color: '#fff',
+        fontSize: '0.9em',
+        cursor: 'pointer',
+        outline: 'none',
+        minWidth: '160px'
+      }}
+    >
+      {fonts.map((f) => (
+        <option key={f} value={f}>
+          {f}
+        </option>
+      ))}
     </select>
   );
 }
@@ -295,76 +430,38 @@ function FontSizeInput({
   setFontSize: (x: number) => void;
   advanced: boolean;
 }) {
-  const { t } = useContext(PrinterContext);
-  const standardSizes = [12, 16, 20, 24, 32, 48, 64, 80, 96, 128];
+  const baseSizes = advanced
+    ? [12, 16, 20, 24, 32, 48, 64, 80, 96, 128, 160, 200]
+    : [24, 32, 48, 64, 80, 128];
 
-  if (!advanced) {
-    return (
-      <label>
-        {t('fontSize')}:
-        <select 
-          value={fontSize} 
-          onChange={(e) => setFontSize(parseInt(e.target.value, 10))}
-          style={{ width: 'auto' }}
-        >
-          {!standardSizes.includes(fontSize) && <option value={fontSize}>{fontSize}</option>}
-          {standardSizes.map(size => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
-        px
-      </label>
-    );
-  }
+  // Always include the current fontSize if it's not in the list
+  const sizes = baseSizes.includes(fontSize) 
+    ? baseSizes 
+    : [...baseSizes, fontSize].sort((a, b) => a - b);
 
   return (
-    <label>
-      {t('fontSize')}:
-      <input
-        type="number"
-        value={fontSize}
-        onChange={(e) => setFontSize(parseInt(e.target.value, 10) || 0)}
-        min="1"
-        max="200"
-      />
-      px
-    </label>
-  );
-}
-
-function TextAlign({
-  align,
-  setAlign,
-}: {
-  align: AlignmentType;
-  setAlign: (x: AlignmentType) => void;
-}) {
-  const { t } = useContext(PrinterContext);
-  const onOptionChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-    if (align === "left" || align === "center" || align === "right")
-      setAlign(e.target.value as AlignmentType);
-  };
-
-  return (
-    <div>
-      <TextAlignButton
-        val="left"
-        text={t('alignLeft')}
-        align={align}
-        onChangeHandler={onOptionChange}
-      />
-      <TextAlignButton
-        val="center"
-        text={t('alignCenter')}
-        align={align}
-        onChangeHandler={onOptionChange}
-      />
-      <TextAlignButton
-        val="right"
-        text={t('alignRight')}
-        align={align}
-        onChangeHandler={onOptionChange}
-      />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <select 
+        value={fontSize} 
+        onChange={(e) => setFontSize(parseInt(e.target.value))}
+        style={{
+          padding: '8px 12px',
+          borderRadius: '10px',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: '#fff',
+          fontSize: '0.9em',
+          cursor: 'pointer',
+          outline: 'none'
+        }}
+      >
+        {sizes.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
+      <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.5)' }}>px</span>
     </div>
   );
 }
@@ -383,42 +480,22 @@ export function LabelMaker() {
   const [showDetailed, setShowDetailed] = useState(false);
   const [advancedFontSize, setAdvancedFontSize] = useState(() => localStorage.getItem("label_advancedFontSize") === "true");
   const [advancedFonts, setAdvancedFonts] = useState(() => localStorage.getItem("label_advancedFonts") === "true");
+  const [autoShrink, setAutoShrink] = useState(() => localStorage.getItem("label_autoShrink") === "true");
+  const [autoExpand, setAutoExpand] = useState(() => localStorage.getItem("label_autoExpand") === "true");
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("label_text", text);
-  }, [text]);
-
-  useEffect(() => {
     localStorage.setItem("label_align", align);
-  }, [align]);
-
-  useEffect(() => {
     localStorage.setItem("label_font", font);
-  }, [font]);
-
-  useEffect(() => {
     localStorage.setItem("label_fontSize", fontSize.toString());
-  }, [fontSize]);
-
-  useEffect(() => {
-    if (length !== null) {
-      localStorage.setItem("label_length", length.toString());
-    } else {
-      localStorage.removeItem("label_length");
-    }
-  }, [length]);
-
-  useEffect(() => {
+    localStorage.setItem("label_length", length?.toString() || "");
     localStorage.setItem("label_direction", direction);
-  }, [direction]);
-
-  useEffect(() => {
+    localStorage.setItem("label_autoShrink", autoShrink.toString());
+    localStorage.setItem("label_autoExpand", autoExpand.toString());
     localStorage.setItem("label_advancedFontSize", advancedFontSize.toString());
-  }, [advancedFontSize]);
-
-  useEffect(() => {
     localStorage.setItem("label_advancedFonts", advancedFonts.toString());
-  }, [advancedFonts]);
+  }, [text, align, font, fontSize, length, direction, autoShrink, autoExpand, advancedFontSize, advancedFonts]);
 
   const { 
     printer, 
@@ -430,32 +507,151 @@ export function LabelMaker() {
     t
   } = useContext(PrinterContext);
 
-  const canPrint = !!printer && printerStatus.state == "connected" && !!bitmap;
+  const canPrint = !!bitmap && printerStatus.state === "connected";
 
   const print = () => {
-    if (canPrint) printer.print(bitmap);
+    if (canPrint && printer) printer.print(bitmap);
   };
+
+  const handleScaleChange = (scale: number) => {
+    if (autoShrink && scale < 0.99) {
+      const newSize = Math.max(12, Math.floor(fontSize * scale));
+      if (newSize !== fontSize) {
+        setFontSize(newSize);
+      }
+    } else if (autoExpand && scale > 1.01) {
+      const newSize = Math.min(200, Math.ceil(fontSize * scale));
+      if (newSize !== fontSize) {
+        setFontSize(newSize);
+      }
+    }
+  };
+
+  const wakeLockSupported = 'wakeLock' in navigator;
 
   return (
     <div className="label-maker">
-      <LabelCanvas
-        text={text}
-        align={align}
-        font={font}
-        fontSize={fontSize}
-        length={length}
-        direction={direction}
-        onChangeBitmap={(x: ImageData) => setBitmap(x)}
-      />
-      <div className="label-maker-controls">
-        <div className="control-group">
+      <div style={{ position: 'relative' }}>
+        <LabelCanvas
+          text={text}
+          align={align}
+          font={font}
+          fontSize={fontSize}
+          length={length}
+          direction={direction}
+          autoShrink={autoShrink}
+          autoExpand={autoExpand}
+          onOverflow={setIsOverflowing}
+          onScaleChange={handleScaleChange}
+          onChangeBitmap={(x: ImageData) => setBitmap(x)}
+        />
+        {isOverflowing && !autoShrink && (
+          <div style={{
+            position: 'absolute',
+            top: -25,
+            left: 0,
+            width: '100%',
+            textAlign: 'center',
+            color: '#ff4d4d',
+            fontSize: '0.8em',
+            fontWeight: 'bold',
+            animation: 'pulse 1.5s infinite'
+          }}>
+            ⚠️ {t('overflowWarning')}
+          </div>
+        )}
+      </div>
+      <div className="label-maker-controls" style={{ 
+        border: isOverflowing && !autoShrink ? '2px solid #ff4d4d' : 'none',
+        borderRadius: '16px',
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '20px 32px',
+        padding: '12px 20px',
+        background: 'rgba(255, 255, 255, 0.03)',
+        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(10px)',
+        margin: '10px 0'
+      }}>
+        {/* Layout Group */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {t('direction')}
+          </span>
           <TextAlign align={align} setAlign={setAlign} />
         </div>
-        <div className="control-group">
-          <FontSelect font={font} setFont={setFont} advanced={advancedFonts} />
-          <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} advanced={advancedFontSize} />
+
+        {/* Length Group */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {t('length')}
+          </span>
           <LengthSelect length={length} setLength={setLength} />
         </div>
+
+        {/* Font Group */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 auto' }}>
+          <span style={{ fontSize: '0.7em', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {t('fontFamily')} / {t('fontSize')}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            <FontSelect font={font} setFont={setFont} advanced={advancedFonts} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <FontSizeInput fontSize={fontSize} setFontSize={setFontSize} advanced={advancedFontSize} />
+              
+              {/* Auto Shrink Toggle */}
+              <label style={{ 
+                cursor: "pointer", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "6px", 
+                fontSize: '0.8em',
+                background: autoShrink ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: autoShrink ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                color: autoShrink ? '#fff' : 'rgba(255,255,255,0.6)'
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={autoShrink} 
+                  onChange={(e) => setAutoShrink(e.target.checked)} 
+                  style={{ cursor: 'pointer', margin: 0 }}
+                />
+                {t('autoShrink')}
+              </label>
+
+              {/* Auto Expand Toggle */}
+              <label style={{ 
+                cursor: "pointer", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "6px", 
+                fontSize: '0.8em',
+                background: autoExpand ? 'rgba(100, 108, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: autoExpand ? '1px solid #646cff' : '1px solid rgba(255,255,255,0.1)',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                color: autoExpand ? '#fff' : 'rgba(255,255,255,0.6)'
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={autoExpand} 
+                  onChange={(e) => setAutoExpand(e.target.checked)} 
+                  style={{ cursor: 'pointer', margin: 0 }}
+                />
+                {t('autoExpand')}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
         <div className="text-input-group">
           <textarea
             value={text}
@@ -495,14 +691,26 @@ export function LabelMaker() {
                 fontSize: '0.9em'
               }}>
                 <div style={{ marginBottom: '10px' }}>
-                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <label style={{ 
+                    cursor: wakeLockSupported ? "pointer" : "default", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "8px",
+                    opacity: wakeLockSupported ? 1 : 0.5
+                  }}>
                     <input 
                       type="checkbox" 
                       checked={browserKeepAlive} 
                       onChange={(e) => setBrowserKeepAlive(e.target.checked)} 
+                      disabled={!wakeLockSupported}
                     />
                     {t('browserKeepAlive')}
                   </label>
+                  {!wakeLockSupported && (
+                    <div style={{ fontSize: '0.75em', color: '#ffa500', marginLeft: '24px', marginTop: '4px' }}>
+                      ℹ️ {t('wakeLockNotSupported')}
+                    </div>
+                  )}
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -552,6 +760,5 @@ export function LabelMaker() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
