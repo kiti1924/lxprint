@@ -1,5 +1,7 @@
 # Thermal Printer Web UI
 
+English | [日本語](./README_JP.md)
+
 A modern, web-based label and photo printing application designed for portable thermal printers. Connect your device via Web Bluetooth and start creating custom labels or printing high-quality processed photos directly from your browser.
 
 ### 🌐 Live Demo (Web UI)
@@ -28,6 +30,20 @@ Optimize your images for the best possible print quality on thermal paper:
 - **Image Processing Methods**:
     - **Dithering (Floyd-Steinberg)**: Perfect for photos and complex images, creating smooth gradients using halftone patterns.
     - **Threshold (Black & White)**: Ideal for logos, QR codes, and simple graphics, producing sharp, high-contrast results.
+
+### 📊 Excel Batch Printing
+Efficiently print multiple labels at once using data from spreadsheets:
+- **Bulk Upload**: Support for `.xlsx` and `.xls` files to automate label creation.
+- **Advanced Row Processing**:
+    - **Loop Support**: Add a "Loop" column to your Excel file to print the same row multiple times.
+    - **Segment Splitting**: Use semicolons (`;`) within a cell to generate separate labels for each segment.
+- **Formatting Options**:
+    - **Compact Mode**: Intelligently packs keys and values to optimize space.
+    - **Auto Wrap**: Ensures long data entries are correctly wrapped within the 384px width.
+- **Precise Batch Control**:
+    - **Print Delay**: Set a custom delay (in seconds) between each label to allow the printer to cool or for easier handling.
+    - **Paper Spacing**: Configure additional paper feed (in mm) between labels for better separation.
+- **Real-time Preview**: View a scrollable list of all generated labels before initiating the print job.
 
 ### ⚡ Smart Connectivity & UI
 - **Web Bluetooth**: Direct connection from your browser to the printer—no drivers or extra software required.
