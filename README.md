@@ -47,11 +47,17 @@ Efficiently print multiple labels at once using data from spreadsheets:
 
 ### ⚡ Smart Connectivity & UI
 - **Web Bluetooth**: Direct connection from your browser to the printer—no drivers or extra software required.
-- **Sleep Prevention**:
-    - **Prevent Browser Sleep**: Keeps the screen awake during long sessions.
-    - **Prevent Printer Sleep**: Sends keep-alive signals to avoid the printer's auto power-off function.
 - **Multi-Language Support**: Fully translated into English and Japanese.
 - **Responsive Design**: A premium, modern interface optimized for both desktop and mobile browsers.
+
+### ⚙️ Detailed Options
+Access the **"Detailed Options"** menu at the bottom of the controls to fine-tune your experience:
+- **Prevent Browser Sleep**: Keeps the screen awake during long sessions (requires Wake Lock API support).
+- **Prevent Printer Sleep**: Sends keep-alive signals to avoid the printer's auto power-off function.
+- **Advanced Font Size**: Unlocks an extended range of font sizes for more granular control.
+- **Advanced Fonts**: Enables access to a broader list of system font families.
+- **Excel Mode**: Toggles the specialized interface for batch processing spreadsheet data.
+- **Text Direction**: Choose between **Horizontal** or **Vertical** printing orientations.
 
 ## Getting Started
 
@@ -77,9 +83,28 @@ Efficiently print multiple labels at once using data from spreadsheets:
 4. Open the displayed local URL in your browser.
 
 ### Usage
-1. Click the **"Connect"** button in the header.
-2. Select your printer from the Bluetooth pairing dialog.
-3. Switch between the **Label** and **Photo** tabs to start printing!
+
+#### 1. Connection
+Click the **"Connect"** button in the header. Select your printer from the Bluetooth pairing dialog (look for names starting with "LX-").
+
+#### 2. Label Maker
+- Type your text in the text area. The preview updates in real-time.
+- Use **Auto-Shrink** or **Auto-Expand** to fit text perfectly.
+- Set a fixed label length or keep it "Auto" for dynamic height.
+- Click **"Print Label"** to send to your device.
+
+#### 3. Excel Batch Printing
+- Enable **Excel Mode** in Detailed Options.
+- Upload your `.xlsx` or `.xls` file.
+- Review the labels in the scrollable preview list.
+- Click **"Excel Print"** to start the batch. The UI will track progress (e.g., "1/50").
+
+#### 4. Photo Printing
+- Switch to the **Photo** tab.
+- Select an image file. It will be automatically scaled to the printer's width.
+- Toggle **Auto Trim** to remove unnecessary white space.
+- Select your preferred processing method (**Dithering** for photos, **Threshold** for logos).
+- Click **"Print Photo"**.
 
 ## Troubleshooting
 
