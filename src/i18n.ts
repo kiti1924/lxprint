@@ -48,6 +48,7 @@ export const translations = {
     autoExpand: "Maximize to fit",
     overflowWarning: "Text exceeds label width!",
     wakeLockNotSupported: "Screen Wake Lock is not supported in this environment (needs HTTPS or localhost).",
+    browserSupportWarning: "Your browser does not support the required Bluetooth or Serial APIs. Please use a Chromium-based browser like Chrome or Edge.",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -96,5 +97,6 @@ export const translations = {
     autoExpand: "幅に合わせて最大化",
     overflowWarning: "テキストがラベル幅を超えています！",
     wakeLockNotSupported: "この環境ではスリープ防止機能を使用できません（HTTPS接続が必要です）。",
+    browserSupportWarning: "お使いのブラウザは必要なBluetoothまたはシリアルAPIをサポートしていません。ChromeやEdgeなどのChromiumベースのブラウザを使用してください。",
   }
 };

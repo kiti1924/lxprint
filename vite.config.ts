@@ -16,6 +16,7 @@ function commitHash() {
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [react()],
   server: { allowedHosts: [".trycloudflare.com"] },
   define: {

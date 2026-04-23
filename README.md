@@ -1,60 +1,76 @@
 # Thermal Printer Web UI
 
-This repository is a fork of [paradon/lxprint](https://github.com/paradon/lxprint), a Web Bluetooth application designed for affordable thermal printers like the LX-D02. 
+A modern, web-based label and photo printing application designed for portable thermal printers. Connect your device via Web Bluetooth and start creating custom labels or printing high-quality processed photos directly from your browser.
 
-**Note:** This project incorporates and builds upon code originally developed by [paradon](https://github.com/paradon/lxprint). Specific printer communication logic and core data structures were derived from the original repository.
+## Features
 
-## Key Updates (Improvements)
+### 🏷️ Professional Label Maker
+Design custom labels with precise control over every detail:
+- **Smart Sizing**:
+    - **Auto-Shrink**: Automatically reduces font size to ensure long text fits perfectly within the label width.
+    - **Auto-Expand**: Maximizes the font size to fill the available space for a bold look.
+- **Text Alignment**: Choose between Left, Center, or Right alignment.
+- **Font Customization**: Select from various font families and manually adjust font sizes when needed.
+- **Length Control**: Set the label length to "Auto" (dynamic based on text) or define a fixed size (e.g., 28mm).
+- **Directional Printing**: Support for both Horizontal and Vertical text orientations.
 
-This fork introduces several enhancements and new features over the original repository:
-
-### Enhanced Label Maker
-- **Text Alignment**: Choose between Left, Center, and Right alignment for your labels.
-- **Font Customization**: Easily change font families and adjust font sizes.
-- **Length Control**: Set the label length to "Auto" or a fixed size (e.g., 28mm).
-
-### Advanced Photo Printing
-- **Auto Trim**: Automatically detects and removes unnecessary white or transparent margins from images before printing.
+### 🖼️ Advanced Photo Printing
+Optimize your images for the best possible print quality on thermal paper:
+- **Automatic Scaling**: Images are automatically resized to fit the printer's maximum width (typically 384px).
+- **Auto Trim**: Intelligently detects and removes white or transparent margins to save paper and focus on the subject.
 - **Image Processing Methods**:
-  - **Dithering (Floyd-Steinberg)**: Best for photos, providing smooth gradients using halftone patterns.
-  - **Threshold (Black & White)**: Best for logos or simple graphics, converting images into sharp black and white.
-- **Automatic Scaling**: Images are automatically resized to fit the printer's maximum width (384px).
+    - **Dithering (Floyd-Steinberg)**: Perfect for photos and complex images, creating smooth gradients using halftone patterns.
+    - **Threshold (Black & White)**: Ideal for logos, QR codes, and simple graphics, producing sharp, high-contrast results.
 
-### Modern UI/UX
-- A completely redesigned interface featuring a premium aesthetic for a more intuitive and enjoyable user experience.
+### ⚡ Smart Connectivity & UI
+- **Web Bluetooth**: Direct connection from your browser to the printer—no drivers or extra software required.
+- **Sleep Prevention**:
+    - **Prevent Browser Sleep**: Keeps the screen awake during long sessions.
+    - **Prevent Printer Sleep**: Sends keep-alive signals to avoid the printer's auto power-off function.
+- **Multi-Language Support**: Fully translated into English and Japanese.
+- **Responsive Design**: A premium, modern interface optimized for both desktop and mobile browsers.
 
-## Getting Started (Usage)
+## Getting Started
 
 ### Prerequisites
-Before you begin, ensure you have **Node.js** and **npm** (included with Node.js) installed on your machine. You can download them from [nodejs.org](https://nodejs.org/).
+- A compatible thermal printer (e.g., LX-D02 or similar).
+- A browser that supports Web Bluetooth (Chrome, Edge, or Opera recommended).
+- **Node.js** and **npm** installed for local development.
 
 ### Installation
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
-2.  Start the development server:
-    ```bash
-    npm run dev
-    ```
-3.  Open the URL shown in your terminal and click "Connect Printer" to pair with your LX device.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/lxprint.git
+   cd lxprint
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Open the displayed local URL in your browser.
 
-## Troubleshooting (Q&A)
+### Usage
+1. Click the **"Connect"** button in the header.
+2. Select your printer from the Bluetooth pairing dialog.
+3. Switch between the **Label** and **Photo** tabs to start printing!
+
+## Troubleshooting
 
 **Q: I cannot find or connect to my printer. What should I check first?**
-**A:** Please check the following basic steps:
-- **Bluetooth Status**: Ensure Bluetooth is enabled in your system settings (Windows or macOS).
-- **Browser Check**: Enter `chrome://bluetooth-internals/#devices` in your browser's address bar. Check if your printer appears in the list and is being discovered correctly by the browser.
+- **Bluetooth Status**: Ensure Bluetooth is enabled on your system.
+- **Browser Check**: Visit `chrome://bluetooth-internals/#devices` to see if the browser discovers your device.
 
-**Q: My printer doesn't show up in the pairing dialog on my Mac. What should I do?**
-**A:** macOS can sometimes have trouble discovering certain Bluetooth devices. We recommend:
-- **Using LightBlue**: Download the **LightBlue** app from the App Store. Use it to scan for Bluetooth devices and see if your printer (usually named starting with "LX") is detectable there.
+**Q: My printer doesn't show up in the pairing dialog on my Mac.**
+- macOS discovery can be finicky. Try using the **LightBlue** app (available on the App Store) to verify that your printer (usually "LX-...") is broadcasting.
 
-**Q: The connection was lost or failed, and now I can't reconnect at all.**
-**A:** Web Bluetooth connections can sometimes hang. For Mac users especially:
-- **Fully Quit the Browser**: Simply closing the tab or window may not clear the Bluetooth cache. Use **`Command + Q`** to completely quit your browser (Chrome, etc.), then restart it and try connecting again.
+**Q: The connection was lost and I can't reconnect.**
+- Web Bluetooth can sometimes hang. Completely quit your browser (**Command + Q** on Mac) to clear the Bluetooth cache, then try again.
 
 ## Credits
 
 This project was built upon the foundations laid by:
-- **[paradon/lxprint](https://github.com/paradon/lxprint)**: The original project providing the core Web Bluetooth implementation and printer protocols.
+- **[paradon/lxprint](https://github.com/paradon/lxprint)**: We are grateful for their original implementation of the core Web Bluetooth protocols and printer communication logic.

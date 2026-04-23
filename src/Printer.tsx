@@ -144,10 +144,21 @@ function Status({
 
 function Printer() {
   const { printer, printerStatus, errors, connect, t } = useContext(PrinterContext);
+  const isSupported = ('bluetooth' in navigator) || ('serial' in navigator);
 
   const disconnect = async () => {
     return await printer?.disconnect();
   };
+
+  if (!isSupported) {
+    return (
+      <div className="printer-status-area" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid rgba(255, 0, 0, 0.3)' }}>
+        <p style={{ color: '#ff6b6b', fontSize: '0.9em', margin: 0 }}>
+          ⚠️ {t('browserSupportWarning')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
