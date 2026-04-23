@@ -25,6 +25,14 @@ export class YHKPrinter extends Printer<YHKPrinterStatus> {
     return "YHK";
   }
 
+  _printerKeepAlive: boolean = false;
+  get printerKeepAlive(): boolean {
+    return this._printerKeepAlive;
+  }
+  set printerKeepAlive(val: boolean) {
+    this._printerKeepAlive = val;
+  }
+
   async connect() {
     this.dev = await navigator.serial.requestPort({
       allowedBluetoothServiceClassIds: ["00001101-0000-1000-8000-00805f9b34fb"],

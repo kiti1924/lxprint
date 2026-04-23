@@ -7,6 +7,8 @@ export abstract class Printer<
   abstract print(img: ImageData): Promise<void>;
   abstract status: TStatus;
   abstract name: string | undefined;
+  abstract set printerKeepAlive(val: boolean);
+  abstract get printerKeepAlive(): boolean;
 
   setStatus(status: Partial<TStatus>) {
     this.status = { ...this.status, ...status };

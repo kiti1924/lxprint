@@ -62,6 +62,40 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
   authCrc?: number[];
 
   printingImage?: BitmapData;
+  _printerKeepAlive: boolean = false;
+  heartbeatInterval?: number;
+
+  get printerKeepAlive(): boolean {
+    return this._printerKeepAlive;
+  }
+
+  set printerKeepAlive(val: boolean) {
+    this._printerKeepAlive = val;
+    this.updateHeartbeat();
+  }
+
+  updateHeartbeat() {
+    clearInterval(this.heartbeatInterval);
+    if (this._printerKeepAlive && this.status.state === "connected") {
+      this.heartbeatInterval = setInterval(async () => {
+        if (this.status.state === "connected" && this.sendChar) {
+          console.log("Sending heartbeat...");
+          try {
+            await this.sendChar.writeValueWithoutResponse(new Uint8Array([0x5a, 0x01]));
+          } catch (e) {
+            console.error("Heartbeat failed", e);
+          }
+        }
+      }, 30000);
+    }
+  }
+
+  setStatus(status: Partial<LXPrinterStatus>) {
+    super.setStatus(status);
+    if (status.state) {
+      this.updateHeartbeat();
+    }
+  }
 
   get driverName(): string {
     return "lx";

@@ -1,6 +1,7 @@
 import {
   createContext,
   useState,
+  useEffect,
   // type Dispatch,
   // type SetStateAction,
 } from "react";
@@ -19,6 +20,10 @@ export type PrinterContextType = {
   // setPrinterStatus: Dispatch<SetStateAction<PrinterStatus | undefined>>;
   connect: (driver: string) => Promise<Printer>;
   errors: string[];
+  browserKeepAlive: boolean;
+  setBrowserKeepAlive: (val: boolean) => void;
+  printerKeepAlive: boolean;
+  setPrinterKeepAlive: (val: boolean) => void;
 };
 
 export const PrinterContext = createContext<PrinterContextType>(
@@ -33,10 +38,56 @@ export const PrinterContextProvider: React.FC<{
   });
   const [printer, setPrinter] = useState<Printer>();
   const [errors, setErrors] = useState<string[]>([]);
+  const [browserKeepAlive, setBrowserKeepAlive] = useState(() => localStorage.getItem("browser_keep_alive") === "true");
+  const [printerKeepAlive, setPrinterKeepAlive] = useState(() => localStorage.getItem("printer_keep_alive") === "true");
+
+  useEffect(() => {
+    localStorage.setItem("browser_keep_alive", browserKeepAlive.toString());
+  }, [browserKeepAlive]);
+
+  useEffect(() => {
+    localStorage.setItem("printer_keep_alive", printerKeepAlive.toString());
+    if (printer) {
+      printer.printerKeepAlive = printerKeepAlive;
+    }
+  }, [printerKeepAlive, printer]);
+
+  // Screen Wake Lock API (Browser Keep-Alive)
+  useEffect(() => {
+    if (!browserKeepAlive) return;
+
+    let wakeLock: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+          console.log('Wake Lock is active');
+        }
+      } catch (err: any) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    };
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock) wakeLock.release();
+    };
+  }, [browserKeepAlive]);
 
   const connectPrinter = async (driver: string) => {
     setErrors([]);
     const prn: Printer = await connect(driver);
+    prn.printerKeepAlive = printerKeepAlive;
     prn.addEventListener("status", (e) =>
       setPrinterStatus((e as PrinterStatusEvent<PrinterStatus>).status),
     );
@@ -49,7 +100,16 @@ export const PrinterContextProvider: React.FC<{
 
   return (
     <PrinterContext
-      value={{ printer, printerStatus, errors, connect: connectPrinter }}
+      value={{ 
+        printer, 
+        printerStatus, 
+        errors, 
+        connect: connectPrinter, 
+        browserKeepAlive, 
+        setBrowserKeepAlive, 
+        printerKeepAlive, 
+        setPrinterKeepAlive 
+      }}
     >
       {children}
     </PrinterContext>

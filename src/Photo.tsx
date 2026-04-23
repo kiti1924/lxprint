@@ -4,11 +4,28 @@ import { PrinterContext } from "./context.tsx";
 export function PhotoMaker() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [bitmap, setBitmap] = useState<ImageData | null>(null);
-  const [autoTrim, setAutoTrim] = useState(false);
-  const [processingMethod, setProcessingMethod] = useState<"dithering" | "threshold">("dithering");
+  const [autoTrim, setAutoTrim] = useState(() => localStorage.getItem("photo_autoTrim") === "true");
+  const [processingMethod, setProcessingMethod] = useState<"dithering" | "threshold">(() => (localStorage.getItem("photo_processingMethod") as any) || "dithering");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { printer, printerStatus } = use(PrinterContext);
+  const [showDetailed, setShowDetailed] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("photo_autoTrim", autoTrim.toString());
+  }, [autoTrim]);
+
+  useEffect(() => {
+    localStorage.setItem("photo_processingMethod", processingMethod);
+  }, [processingMethod]);
+
+  const { 
+    printer, 
+    printerStatus,
+    browserKeepAlive,
+    setBrowserKeepAlive,
+    printerKeepAlive,
+    setPrinterKeepAlive
+  } = use(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state === "connected" && !!bitmap;
 
@@ -120,7 +137,7 @@ export function PhotoMaker() {
           <div className="canvas-container">
             <canvas ref={canvasRef} />
           </div>
-          <div className="actions">
+          <div className="actions" style={{ textAlign: 'center' }}>
             <button 
               className="print-button" 
               onClick={print} 
@@ -128,6 +145,55 @@ export function PhotoMaker() {
             >
               {printerStatus.state === "printing" ? "Printing..." : "Print Photo"}
             </button>
+
+            <div style={{ marginTop: '15px' }}>
+              <button 
+                className="detailed-options-button" 
+                onClick={() => setShowDetailed(!showDetailed)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '0.85em',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                {showDetailed ? "詳細設定を隠す" : "詳細設定 (詳細オプション)"}
+              </button>
+              
+              {showDetailed && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  padding: '15px', 
+                  background: 'rgba(255, 255, 255, 0.05)', 
+                  borderRadius: '12px',
+                  textAlign: 'left',
+                  fontSize: '0.9em'
+                }}>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input 
+                        type="checkbox" 
+                        checked={browserKeepAlive} 
+                        onChange={(e) => setBrowserKeepAlive(e.target.checked)} 
+                      />
+                      ブラウザのスリープ防止 (画面を点灯したままにする)
+                    </label>
+                  </div>
+                  <div>
+                    <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input 
+                        type="checkbox" 
+                        checked={printerKeepAlive} 
+                        onChange={(e) => setPrinterKeepAlive(e.target.checked)} 
+                      />
+                      プリンターのスリープ防止 (自動電源オフを防ぐ)
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

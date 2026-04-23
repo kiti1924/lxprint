@@ -353,14 +353,49 @@ function TextAlign({
 }
 
 export function LabelMaker() {
-  const [text, setText] = useState("Hello");
-  const [align, setAlign] = useState<"left" | "center" | "right">("left");
+  const [text, setText] = useState(() => localStorage.getItem("label_text") || "Hello");
+  const [align, setAlign] = useState<"left" | "center" | "right">(() => (localStorage.getItem("label_align") as any) || "left");
   const [bitmap, setBitmap] = useState<ImageData>();
-  const [font, setFont] = useState<string>("sans-serif");
-  const [fontSize, setFontSize] = useState<number>(24);
-  const [length, setLength] = useState<number | null>(null);
+  const [font, setFont] = useState<string>(() => localStorage.getItem("label_font") || "sans-serif");
+  const [fontSize, setFontSize] = useState<number>(() => parseInt(localStorage.getItem("label_fontSize") || "24", 10));
+  const [length, setLength] = useState<number | null>(() => {
+    const val = localStorage.getItem("label_length");
+    return val ? parseInt(val, 10) : null;
+  });
+  const [showDetailed, setShowDetailed] = useState(false);
 
-  const { printer, printerStatus } = use(PrinterContext);
+  useEffect(() => {
+    localStorage.setItem("label_text", text);
+  }, [text]);
+
+  useEffect(() => {
+    localStorage.setItem("label_align", align);
+  }, [align]);
+
+  useEffect(() => {
+    localStorage.setItem("label_font", font);
+  }, [font]);
+
+  useEffect(() => {
+    localStorage.setItem("label_fontSize", fontSize.toString());
+  }, [fontSize]);
+
+  useEffect(() => {
+    if (length !== null) {
+      localStorage.setItem("label_length", length.toString());
+    } else {
+      localStorage.removeItem("label_length");
+    }
+  }, [length]);
+
+  const { 
+    printer, 
+    printerStatus, 
+    browserKeepAlive, 
+    setBrowserKeepAlive, 
+    printerKeepAlive, 
+    setPrinterKeepAlive 
+  } = use(PrinterContext);
 
   const canPrint = !!printer && printerStatus.state == "connected" && !!bitmap;
 
@@ -399,6 +434,55 @@ export function LabelMaker() {
           <button className="print-button" onClick={print} disabled={!canPrint}>
             {printerStatus.state === "printing" ? "Printing..." : "Print Label"}
           </button>
+          
+          <div style={{ marginTop: '15px' }}>
+            <button 
+              className="detailed-options-button" 
+              onClick={() => setShowDetailed(!showDetailed)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '0.85em',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {showDetailed ? "詳細設定を隠す" : "詳細設定 (詳細オプション)"}
+            </button>
+            
+            {showDetailed && (
+              <div style={{ 
+                marginTop: '10px', 
+                padding: '15px', 
+                background: 'rgba(255, 255, 255, 0.05)', 
+                borderRadius: '12px',
+                textAlign: 'left',
+                fontSize: '0.9em'
+              }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
+                      checked={browserKeepAlive} 
+                      onChange={(e) => setBrowserKeepAlive(e.target.checked)} 
+                    />
+                    ブラウザのスリープ防止 (画面を点灯したままにする)
+                  </label>
+                </div>
+                <div>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
+                      checked={printerKeepAlive} 
+                      onChange={(e) => setPrinterKeepAlive(e.target.checked)} 
+                    />
+                    プリンターのスリープ防止 (自動電源オフを防ぐ)
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
