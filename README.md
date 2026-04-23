@@ -1,6 +1,8 @@
-# lxprint (Thermal Printer App)
+# Thermal Printer Web UI
 
-This repository is a fork of [paradon/lxprint](https://github.com/paradon/lxprint), a Web Bluetooth application designed for affordable thermal printers like the LX-D02.
+This repository is a fork of [paradon/lxprint](https://github.com/paradon/lxprint), a Web Bluetooth application designed for affordable thermal printers like the LX-D02. 
+
+**Note:** This project incorporates and builds upon code originally developed by [paradon](https://github.com/paradon/lxprint). Specific printer communication logic and core data structures were derived from the original repository.
 
 ## Key Updates (Improvements)
 
@@ -51,3 +53,8 @@ Before you begin, ensure you have **Node.js** and **npm** (included with Node.js
 **Q: The connection was lost or failed, and now I can't reconnect at all.**
 **A:** Web Bluetooth connections can sometimes hang. For Mac users especially:
 - **Fully Quit the Browser**: Simply closing the tab or window may not clear the Bluetooth cache. Use **`Command + Q`** to completely quit your browser (Chrome, etc.), then restart it and try connecting again.
+
+## Credits
+
+This project was built upon the foundations laid by:
+- **[paradon/lxprint](https://github.com/paradon/lxprint)**: The original project providing the core Web Bluetooth implementation and printer protocols.
