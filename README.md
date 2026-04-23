@@ -2,6 +2,13 @@
 
 A modern, web-based label and photo printing application designed for portable thermal printers. Connect your device via Web Bluetooth and start creating custom labels or printing high-quality processed photos directly from your browser.
 
+### 🌐 Live Demo (Web UI)
+**[Open Thermal Printer Web UI](https://thermal-printer-web-ui-1.onrender.com/)**
+
+> [!NOTE]
+> - **Testing Only**: This live demo is provided for testing purposes. If there is high traffic, the service may become temporarily unavailable or slow.
+> - **Privacy & Data**: This is a client-side application. Your data (labels, photos, settings) is **never saved on the server**. Everything is processed and stored entirely within your local device's browser.
+
 ## Features
 
 ### 🏷️ Professional Label Maker
