@@ -290,7 +290,7 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
       new Uint8Array([0x5a, 0x04, printlen >> 8, printlen & 0xff, 0x01, 0x00]),
     );
 
-    await delay(200); // Wait for printer to finalize
+    await delay(50); // Wait for printer to finalize
     this.setStatus({ state: "connected" });
   }
 
@@ -332,22 +332,30 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
     const msg = new Uint8Array(6);
     const dv = new DataView(msg.buffer);
     msg.set([0x5a, 0x04]);
-    dv.setUint16(2, this.printingImage.printLength + 1);
+    dv.setUint16(2, this.printingImage.printLength);
     await this.sendChar?.writeValueWithoutResponse(msg);
 
     for (const line of this.printingImage.generatePrintData()) {
       if (this.status.state !== "printing") break;
       await this.sendChar?.writeValueWithoutResponse(line);
       // Small delay to prevent buffer overflow on the printer side
-      await delay(30);
+      await delay(10);
     }
 
     const lastLine = new Uint8Array(100);
     lastLine.set([
       0x55,
-      this.printingImage.printLength >> 8,
-      this.printingImage.printLength & 0xff,
+      (this.printingImage.printLength - 1) >> 8,
+      (this.printingImage.printLength - 1) & 0xff,
     ]);
     await this.sendChar?.writeValueWithoutResponse(lastLine);
+
+    // Fallback: if no 0x06 (ACK) is received within 10 seconds, reset state to connected
+    setTimeout(() => {
+      if (this.status.state === "printing") {
+        console.warn("Print ACK timeout, forcing connected state");
+        this.setStatus({ state: "connected" });
+      }
+    }, 10000);
   }
 }

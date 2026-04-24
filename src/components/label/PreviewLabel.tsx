@@ -11,6 +11,7 @@ export function PreviewLabel({
   direction,
   autoShrink,
   autoExpand,
+  padding,
 }: {
   text: string;
   align: AlignmentType;
@@ -20,6 +21,7 @@ export function PreviewLabel({
   direction: "horizontal" | "vertical";
   autoShrink: boolean;
   autoExpand: boolean;
+  padding: number;
 }) {
   const [svgData, setSvgData] = useState<string>("");
   const [width, setWidth] = useState<number>(0);
@@ -52,6 +54,7 @@ export function PreviewLabel({
         direction={direction}
         autoShrink={autoShrink}
         autoExpand={autoExpand}
+        padding={padding}
       />
       {svgData && (
         <div 

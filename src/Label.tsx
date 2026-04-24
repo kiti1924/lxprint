@@ -3,7 +3,7 @@ import { PrinterContext } from "./context";
 import { useLabelState } from "./components/label/useLabelState";
 import { LabelCanvas } from "./components/label/LabelCanvas";
 import { PreviewLabel } from "./components/label/PreviewLabel";
-import { TextAlign, LengthSelect, FontSelect, FontSizeInput } from "./components/label/LabelControls";
+import { TextAlign, LengthSelect, FontSelect, FontSizeInput, PaddingInput } from "./components/label/LabelControls";
 import { parseExcelFile, formatExcelRow } from "./lib/excelUtils";
 import { measureTextWidth } from "./lib/measureText";
 
@@ -60,26 +60,36 @@ export function LabelMaker() {
     if (!excelData.length || !printer) return;
     setIsBatchPrinting(true);
     setBatchIndex(0);
-    setWaitingForRender(true);
     
     const firstRow = excelData[0];
-    state.setText(formatExcelRow(firstRow, {
+    const formattedText = formatExcelRow(firstRow, {
       isCompact: state.excelCompact,
       excelShowKey: state.excelShowKey,
       excelAutoWrap: state.excelAutoWrap,
       font: state.font,
       fontSize: state.fontSize
-    }));
+    });
+
+    if (formattedText !== state.text) {
+      setBitmap(undefined);
+    }
+    
+    setWaitingForRender(true);
+    state.setText(formattedText);
   };
 
   useEffect(() => {
-    if (!isBatchPrinting || !waitingForRender || !bitmap || !printer) return;
+    if (!isBatchPrinting || !waitingForRender || !bitmap || !printer || printerStatus.state !== "connected") return;
     
     const doPrint = async () => {
-      await printer.print(bitmap);
+      // If the text is effectively empty, skip printing this row
+      if (state.text.trim()) {
+        await printer.print(bitmap);
+      }
+      
       setWaitingForRender(false);
       
-      if (state.excelSpacing > 0) {
+      if (state.text.trim() && state.excelSpacing > 0) {
         await printer.feed(state.excelSpacing);
       }
 
@@ -89,16 +99,22 @@ export function LabelMaker() {
 
       const nextIndex = batchIndex + 1;
       if (nextIndex < excelData.length) {
-        setBatchIndex(nextIndex);
-        setWaitingForRender(true);
         const nextRow = excelData[nextIndex];
-        state.setText(formatExcelRow(nextRow, {
+        const nextText = formatExcelRow(nextRow, {
           isCompact: state.excelCompact,
           excelShowKey: state.excelShowKey,
           excelAutoWrap: state.excelAutoWrap,
           font: state.font,
           fontSize: state.fontSize
-        }));
+        });
+
+        if (nextText !== state.text) {
+          setBitmap(undefined);
+        }
+        
+        setBatchIndex(nextIndex);
+        setWaitingForRender(true);
+        state.setText(nextText);
       } else {
         setIsBatchPrinting(false);
         setBatchIndex(-1);
@@ -106,7 +122,7 @@ export function LabelMaker() {
     };
 
     doPrint();
-  }, [bitmap, isBatchPrinting, waitingForRender, batchIndex, excelData, printer, state]);
+  }, [bitmap, isBatchPrinting, waitingForRender, batchIndex, excelData, printer, printerStatus, state]);
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -148,6 +164,7 @@ export function LabelMaker() {
           direction={state.direction}
           autoShrink={state.autoShrink}
           autoExpand={state.autoExpand}
+          padding={state.padding}
           onOverflow={setIsOverflowing}
           onScaleChange={handleScaleChange}
           onChangeBitmap={setBitmap}
@@ -195,7 +212,17 @@ export function LabelMaker() {
             <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
               {t('length')}
             </span>
-            <LengthSelect length={state.length} setLength={state.setLength} />
+            <LengthSelect 
+              length={state.length} 
+              setLength={state.setLength} 
+              advanced={state.advancedLength} 
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75em', color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {t('padding')}
+            </span>
+            <PaddingInput padding={state.padding} setPadding={state.setPadding} />
           </div>
         </div>
 
@@ -360,6 +387,16 @@ export function LabelMaker() {
                   <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
                     <input 
                       type="checkbox" 
+                      checked={state.advancedLength} 
+                      onChange={(e) => state.setAdvancedLength(e.target.checked)} 
+                    />
+                    {t('advancedLength')}
+                  </label>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
                       checked={state.advancedFonts} 
                       onChange={(e) => state.setAdvancedFonts(e.target.checked)} 
                     />
@@ -481,6 +518,7 @@ export function LabelMaker() {
                                   direction={state.direction}
                                   autoShrink={state.autoShrink}
                                   autoExpand={state.autoExpand}
+                                  padding={state.padding}
                                 />
                               </div>
                             ))}
@@ -548,8 +586,8 @@ export function LabelMaker() {
                 </div>
               </div>
             )}
-          </div>
         </div>
       </div>
+    </div>
   );
 }

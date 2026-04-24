@@ -12,6 +12,7 @@ export function LabelSvg({
   direction,
   autoShrink,
   autoExpand,
+  padding,
 }: {
   text: string;
   onChange: (svg: string, width: number, height: number) => void;
@@ -23,6 +24,7 @@ export function LabelSvg({
   direction: "horizontal" | "vertical";
   autoShrink: boolean;
   autoExpand: boolean;
+  padding: number;
 }) {
   const ref = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -37,7 +39,6 @@ export function LabelSvg({
     if (!ref.current || !gRef.current) return;
     
     const bbox = gRef.current.getBBox();
-    const padding = 2;
     const realW = bbox.width + padding * 2;
     const realH = bbox.height + padding * 2;
 
@@ -78,7 +79,7 @@ export function LabelSvg({
     }
 
     onChange(ref.current.outerHTML, finalW, finalH);
-  }, [text, align, font, fontSize, direction, autoShrink, autoExpand]);
+  }, [text, align, font, fontSize, direction, autoShrink, autoExpand, padding]);
 
   return (
     <div style={{ position: "absolute", top: 0, left: 0, opacity: 0, pointerEvents: "none" }}>

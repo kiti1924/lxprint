@@ -15,6 +15,9 @@ export function useLabelState() {
   const [autoShrink, setAutoShrink] = useLocalStorage("label_autoShrink", false);
   const [autoExpand, setAutoExpand] = useLocalStorage("label_autoExpand", false);
   
+  const [advancedLength, setAdvancedLength] = useLocalStorage("label_advancedLength", false);
+  const [padding, setPadding] = useLocalStorage("label_padding", 2);
+  
   const [excelMode, setExcelMode] = useLocalStorage("label_excelMode", false);
   const [excelDelay, setExcelDelay] = useLocalStorage("label_excelDelay", 0);
   const [excelSpacing, setExcelSpacing] = useLocalStorage("label_excelSpacing", 0);
@@ -33,6 +36,8 @@ export function useLabelState() {
     advancedFonts, setAdvancedFonts,
     autoShrink, setAutoShrink,
     autoExpand, setAutoExpand,
+    advancedLength, setAdvancedLength,
+    padding, setPadding,
     excelMode, setExcelMode,
     excelDelay, setExcelDelay,
     excelSpacing, setExcelSpacing,

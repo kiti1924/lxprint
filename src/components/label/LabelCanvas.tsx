@@ -11,6 +11,7 @@ export function LabelCanvas({
   direction,
   autoShrink,
   autoExpand,
+  padding,
   onOverflow,
   onScaleChange,
   onChangeBitmap,
@@ -23,6 +24,7 @@ export function LabelCanvas({
   direction: "horizontal" | "vertical";
   autoShrink: boolean;
   autoExpand: boolean;
+  padding: number;
   onOverflow: (overflowing: boolean) => void;
   onScaleChange?: (scale: number) => void;
   onChangeBitmap: (x: ImageData) => void;
@@ -99,6 +101,7 @@ export function LabelCanvas({
         direction={direction}
         autoShrink={autoShrink}
         autoExpand={autoExpand}
+        padding={padding}
       />
       <div className="canvas-wrapper">
         <div className="canvas-container">

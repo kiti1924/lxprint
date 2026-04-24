@@ -60,6 +60,8 @@ export const translations = {
     excelPrint: "Print Excel Data",
     excelTotal: "Total rows: ",
     preview: "Preview",
+    advancedLength: "Enable advanced length settings (Numeric input)",
+    padding: "Content padding (px)",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -120,5 +122,7 @@ export const translations = {
     excelPrint: "Excelデータを印刷",
     excelTotal: "合計行数: ",
     preview: "プレビュー",
+    advancedLength: "詳細な長さ設定を有効にする (数値入力)",
+    padding: "文字周囲の余白 (px)",
   }
 };
