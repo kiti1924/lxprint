@@ -66,6 +66,7 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
   authCrc?: number[];
 
   printingImage?: BitmapData;
+  private isSendingData: boolean = false;
   _printerKeepAlive: boolean = false;
   heartbeatInterval?: number;
 
@@ -278,6 +279,7 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
       case 0x02:
         return this.setStatus(parseStatusMsg(msg));
       case 0x06:
+        if (this.isSendingData) return;
         return await this.donePrinting(msg);
     }
   }
@@ -290,7 +292,7 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
       new Uint8Array([0x5a, 0x04, printlen >> 8, printlen & 0xff, 0x01, 0x00]),
     );
 
-    await delay(50); // Wait for printer to finalize
+    await delay(500); // Wait for printer to finalize
     this.setStatus({ state: "connected" });
   }
 
@@ -335,12 +337,14 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
     dv.setUint16(2, this.printingImage.printLength);
     await this.sendChar?.writeValueWithoutResponse(msg);
 
+    this.isSendingData = true;
     for (const line of this.printingImage.generatePrintData()) {
-      if (this.status.state !== "printing") break;
+      if (this.status.state === "disconnected") break;
       await this.sendChar?.writeValueWithoutResponse(line);
       // Small delay to prevent buffer overflow on the printer side
-      await delay(10);
+      await delay(20);
     }
+    this.isSendingData = false;
 
     const lastLine = new Uint8Array(100);
     lastLine.set([
@@ -356,6 +360,6 @@ export class LXPrinter extends Printer<LXPrinterStatus> {
         console.warn("Print ACK timeout, forcing connected state");
         this.setStatus({ state: "connected" });
       }
-    }, 10000);
+    }, 60000);
   }
 }
