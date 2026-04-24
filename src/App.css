@@ -109,6 +109,13 @@ h1 {
   filter: drop-shadow(0 0 10px rgba(100, 108, 255, 0.5));
 }
 
+.upload-section.dragging .select-button {
+  background: rgba(100, 108, 255, 0.15);
+  border-color: #af40ff;
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(100, 108, 255, 0.3);
+}
+
 .select-button:hover {
   background: rgba(100, 108, 255, 0.08);
   border-color: #af40ff;

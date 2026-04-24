@@ -7,6 +7,7 @@ export function PhotoMaker() {
   const [bitmap, setBitmap] = useState<ImageData | null>(null);
   const [autoTrim, setAutoTrim] = useState(() => localStorage.getItem("photo_autoTrim") === "true");
   const [processingMethod, setProcessingMethod] = useState<"dithering" | "threshold">(() => (localStorage.getItem("photo_processingMethod") as any) || "dithering");
+  const [dragging, setDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showDetailed, setShowDetailed] = useState(false);
@@ -31,10 +32,8 @@ export function PhotoMaker() {
 
   const canPrint = !!printer && printerStatus.state === "connected" && !!bitmap;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -44,6 +43,28 @@ export function PhotoMaker() {
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
   };
 
   useEffect(() => {
@@ -113,7 +134,12 @@ export function PhotoMaker() {
 
   return (
     <div className="photo-maker">
-      <div className="upload-section">
+      <div 
+        className={`upload-section ${dragging ? 'dragging' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <input
           type="file"
           accept="image/*"
