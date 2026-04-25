@@ -87,3 +87,59 @@ export function getImageContentBounds(ctx: CanvasRenderingContext2D, width: numb
   if (!found) return { x: 0, y: 0, width, height };
   return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
 }
+
+export function trimImageData(imageData: ImageData) {
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Create a temporary canvas to use getImageContentBounds
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return imageData;
+  
+  ctx.putImageData(imageData, 0, 0);
+  const bounds = getImageContentBounds(ctx, width, height);
+  
+  if (bounds.width === width && bounds.height === height && bounds.x === 0 && bounds.y === 0) {
+    return imageData;
+  }
+  
+  return ctx.getImageData(bounds.x, bounds.y, bounds.width, bounds.height);
+}
+
+export function combineImages(images: ImageData[], spacing: number = 0) {
+  if (images.length === 0) return null;
+  if (images.length === 1 && spacing === 0) return images[0];
+
+  const width = images[0].width;
+  let totalHeight = 0;
+  for (let i = 0; i < images.length; i++) {
+    totalHeight += images[i].height;
+    if (i < images.length - 1) totalHeight += spacing;
+  }
+
+  const result = new Uint8ClampedArray(width * totalHeight * 4);
+  // Fill with transparent/white (depending on printer interpretation, but 0 opacity is usually white)
+  result.fill(0); 
+
+  let currentY = 0;
+  for (const img of images) {
+    if (img.width !== width) {
+      console.warn("combineImages: Image width mismatch. Skipping or stretching is not implemented.");
+    }
+    
+    // Copy image data to the result array
+    for (let y = 0; y < img.height; y++) {
+      const srcStart = y * img.width * 4;
+      const srcEnd = srcStart + img.width * 4;
+      const destStart = (currentY + y) * width * 4;
+      result.set(img.data.subarray(srcStart, srcEnd), destStart);
+    }
+    
+    currentY += img.height + spacing;
+  }
+
+  return new ImageData(result, width, totalHeight);
+}

@@ -17,6 +17,7 @@ export function useLabelState() {
   
   const [advancedLength, setAdvancedLength] = useLocalStorage("label_advancedLength", false);
   const [padding, setPadding] = useLocalStorage("label_padding", 2);
+  const [autoTrim, setAutoTrim] = useLocalStorage("label_autoTrim", true);
   
   const [excelMode, setExcelMode] = useLocalStorage("label_excelMode", false);
   const [excelDelay, setExcelDelay] = useLocalStorage("label_excelDelay", 0);
@@ -24,6 +25,8 @@ export function useLabelState() {
   const [excelCompact, setExcelCompact] = useLocalStorage("label_excelCompact", false);
   const [excelShowKey, setExcelShowKey] = useLocalStorage("label_excelShowKey", true);
   const [excelAutoWrap, setExcelAutoWrap] = useLocalStorage("label_excelAutoWrap", true);
+  const [excelUseBatch, setExcelUseBatch] = useLocalStorage("label_excelUseBatch", false);
+  const [excelBatchSize, setExcelBatchSize] = useLocalStorage("label_excelBatchSize", 10);
 
   return {
     text, setText,
@@ -38,11 +41,14 @@ export function useLabelState() {
     autoExpand, setAutoExpand,
     advancedLength, setAdvancedLength,
     padding, setPadding,
+    autoTrim, setAutoTrim,
     excelMode, setExcelMode,
     excelDelay, setExcelDelay,
     excelSpacing, setExcelSpacing,
     excelCompact, setExcelCompact,
     excelShowKey, setExcelShowKey,
-    excelAutoWrap, setExcelAutoWrap
+    excelAutoWrap, setExcelAutoWrap,
+    excelUseBatch, setExcelUseBatch,
+    excelBatchSize, setExcelBatchSize
   };
 }

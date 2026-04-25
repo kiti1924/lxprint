@@ -62,6 +62,8 @@ export const translations = {
     preview: "Preview",
     advancedLength: "Enable advanced length settings (Numeric input)",
     padding: "Content padding (px)",
+    excelUseBatch: "Batch multiple rows in one print job",
+    excelBatchSize: "Rows per batch",
   },
   jp: {
     appTitle: "Thermal Printer Web UI",
@@ -124,5 +126,7 @@ export const translations = {
     preview: "プレビュー",
     advancedLength: "詳細な長さ設定を有効にする (数値入力)",
     padding: "文字周囲の余白 (px)",
+    excelUseBatch: "複数行をまとめて1枚として印刷する",
+    excelBatchSize: "同時印刷行数",
   }
 };

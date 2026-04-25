@@ -6,6 +6,7 @@ import { PreviewLabel } from "./components/label/PreviewLabel";
 import { TextAlign, LengthSelect, FontSelect, FontSizeInput, PaddingInput } from "./components/label/LabelControls";
 import { parseExcelFile, formatExcelRow } from "./lib/excelUtils";
 import { measureTextWidth } from "./lib/measureText";
+import { combineImages, trimImageData } from "./lib/imageUtils";
 
 export function LabelMaker() {
   const state = useLabelState();
@@ -17,6 +18,7 @@ export function LabelMaker() {
   const [isBatchPrinting, setIsBatchPrinting] = useState(false);
   const [batchIndex, setBatchIndex] = useState(-1);
   const [waitingForRender, setWaitingForRender] = useState(false);
+  const [batchBuffer, setBatchBuffer] = useState<ImageData[]>([]);
 
   const { 
     printer, 
@@ -60,6 +62,7 @@ export function LabelMaker() {
     if (!excelData.length || !printer) return;
     setIsBatchPrinting(true);
     setBatchIndex(0);
+    setBatchBuffer([]);
     
     const firstRow = excelData[0];
     const formattedText = formatExcelRow(firstRow, {
@@ -82,20 +85,37 @@ export function LabelMaker() {
     if (!isBatchPrinting || !waitingForRender || !bitmap || !printer || printerStatus.state !== "connected") return;
     
     const doPrint = async () => {
-      // If the text is effectively empty, skip printing this row
-      if (state.text.trim()) {
-        await printer.print(bitmap);
+      const processedBitmap = state.autoTrim ? trimImageData(bitmap) : bitmap;
+
+      if (state.excelUseBatch) {
+        const newBuffer = [...batchBuffer, processedBitmap];
+        const isLastRow = batchIndex === excelData.length - 1;
+        
+        if (newBuffer.length >= state.excelBatchSize || isLastRow) {
+          const combined = combineImages(newBuffer, Math.round(state.excelSpacing * 8));
+          if (combined) {
+            await printer.print(combined);
+          }
+          setBatchBuffer([]);
+        } else {
+          setBatchBuffer(newBuffer);
+        }
+      } else {
+        // Single-row logic
+        if (state.text.trim()) {
+          await printer.print(processedBitmap);
+        }
+        
+        if (state.text.trim() && state.excelSpacing > 0) {
+          await printer.feed(state.excelSpacing);
+        }
+
+        if (state.excelDelay > 0) {
+          await new Promise(resolve => setTimeout(resolve, state.excelDelay * 1000));
+        }
       }
       
       setWaitingForRender(false);
-      
-      if (state.text.trim() && state.excelSpacing > 0) {
-        await printer.feed(state.excelSpacing);
-      }
-
-      if (state.excelDelay > 0) {
-        await new Promise(resolve => setTimeout(resolve, state.excelDelay * 1000));
-      }
 
       const nextIndex = batchIndex + 1;
       if (nextIndex < excelData.length) {
@@ -118,11 +138,12 @@ export function LabelMaker() {
       } else {
         setIsBatchPrinting(false);
         setBatchIndex(-1);
+        setBatchBuffer([]);
       }
     };
 
     doPrint();
-  }, [bitmap, isBatchPrinting, waitingForRender, batchIndex, excelData, printer, printerStatus, state]);
+  }, [bitmap, isBatchPrinting, waitingForRender, batchIndex, excelData, printer, printerStatus, state, batchBuffer]);
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -165,6 +186,7 @@ export function LabelMaker() {
           autoShrink={state.autoShrink}
           autoExpand={state.autoExpand}
           padding={state.padding}
+          autoTrim={state.autoTrim}
           onOverflow={setIsOverflowing}
           onScaleChange={handleScaleChange}
           onChangeBitmap={setBitmap}
@@ -342,6 +364,16 @@ export function LabelMaker() {
                 fontSize: '0.9em'
               }}>
                 <div style={{ marginBottom: '10px' }}>
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", color: state.autoTrim ? '#646cff' : 'inherit', fontWeight: state.autoTrim ? '600' : 'normal' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={state.autoTrim} 
+                      onChange={(e) => state.setAutoTrim(e.target.checked)} 
+                    />
+                    {t('autoTrim')}
+                  </label>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
                   <label style={{ 
                     cursor: wakeLockSupported ? "pointer" : "default", 
                     display: "flex", 
@@ -481,47 +513,71 @@ export function LabelMaker() {
                             <div style={{ color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontSize: '0.8em', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                               {t('preview')}
                             </div>
-                            {excelData.slice(0, 20).map((row, i) => (
-                              <div key={i} style={{ 
-                                marginBottom: '15px', 
-                                background: 'rgba(255,255,255,0.02)',
-                                borderRadius: '4px',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                width: '384px', 
-                                boxSizing: 'content-box', 
-                                overflow: 'hidden',
-                              }}>
-                                <div style={{ 
-                                  color: '#646cff', 
-                                  fontWeight: 'bold', 
-                                  fontSize: '10px', 
-                                  fontFamily: 'sans-serif', 
-                                  padding: '4px 8px',
-                                  background: 'rgba(0,0,0,0.2)',
-                                  marginBottom: '0',
-                                  opacity: 0.7
-                                }}>
-                                  #{i+1}
-                                </div>
-                                <PreviewLabel 
-                                  text={formatExcelRow(row, {
-                                    isCompact: state.excelCompact,
-                                    excelShowKey: state.excelShowKey,
-                                    excelAutoWrap: state.excelAutoWrap,
-                                    font: state.font,
-                                    fontSize: state.fontSize
-                                  })}
-                                  align={state.align}
-                                  font={state.font}
-                                  fontSize={state.fontSize}
-                                  length={state.length}
-                                  direction={state.direction}
-                                  autoShrink={state.autoShrink}
-                                  autoExpand={state.autoExpand}
-                                  padding={state.padding}
-                                />
-                              </div>
-                            ))}
+                             {excelData.slice(0, 20).map((row, i) => (
+                               <div key={i} style={{ 
+                                 marginBottom: state.excelUseBatch ? '0' : `${Math.max(2, state.excelSpacing * 8)}px`, 
+                                 background: 'rgba(255,255,255,0.02)',
+                                 borderLeft: '1px solid rgba(255,255,255,0.1)',
+                                 borderRight: '1px solid rgba(255,255,255,0.1)',
+                                 borderTop: i === 0 || !state.excelUseBatch ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                 borderBottom: !state.excelUseBatch || i === Math.min(excelData.length, 20) - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                 width: '384px', 
+                                 boxSizing: 'content-box', 
+                                 overflow: 'hidden',
+                                 position: 'relative'
+                               }}>
+                                 {state.excelSpacing > 0 && state.excelUseBatch && i > 0 && (
+                                   <div style={{ 
+                                     height: `${state.excelSpacing * 8}px`, 
+                                     background: 'rgba(255,255,255,0.05)',
+                                     borderTop: '1px dashed rgba(255,255,255,0.2)',
+                                     borderBottom: '1px dashed rgba(255,255,255,0.2)',
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     justifyContent: 'center',
+                                     color: 'rgba(255,255,255,0.2)',
+                                     fontSize: '8px'
+                                   }}>
+                                     {state.excelSpacing}mm
+                                   </div>
+                                 )}
+                                 <div style={{ 
+                                   color: '#646cff', 
+                                   fontWeight: 'bold', 
+                                   fontSize: '10px', 
+                                   fontFamily: 'sans-serif', 
+                                   padding: '2px 8px',
+                                   background: 'rgba(0,0,0,0.2)',
+                                   marginBottom: '0',
+                                   opacity: 0.5,
+                                   position: 'absolute',
+                                   top: 0,
+                                   right: 0,
+                                   zIndex: 1,
+                                   borderRadius: '0 0 0 4px'
+                                 }}>
+                                   #{i+1}
+                                 </div>
+                                 <PreviewLabel 
+                                   text={formatExcelRow(row, {
+                                     isCompact: state.excelCompact,
+                                     excelShowKey: state.excelShowKey,
+                                     excelAutoWrap: state.excelAutoWrap,
+                                     font: state.font,
+                                     fontSize: state.fontSize
+                                   })}
+                                   align={state.align}
+                                   font={state.font}
+                                   fontSize={state.fontSize}
+                                   length={state.length}
+                                   direction={state.direction}
+                                   autoShrink={state.autoShrink}
+                                   autoExpand={state.autoExpand}
+                                   padding={state.autoTrim ? 0 : state.padding}
+                                   autoTrim={state.autoTrim}
+                                 />
+                               </div>
+                             ))}
                             {excelData.length > 20 && (
                               <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '5px' }}>
                                 + {excelData.length - 20} more rows...
@@ -544,8 +600,10 @@ export function LabelMaker() {
                         <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.6)' }}>{t('excelSpacing')}:</span>
                         <input 
                           type="number" 
+                          step="0.1"
+                          min="0"
                           value={state.excelSpacing} 
-                          onChange={(e) => state.setExcelSpacing(parseInt(e.target.value) || 0)} 
+                          onChange={(e) => state.setExcelSpacing(parseFloat(e.target.value) || 0)} 
                           style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '2px 5px' }}
                         />
                       </div>
@@ -581,6 +639,40 @@ export function LabelMaker() {
                           </label>
                         </div>
                       )}
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', margin: '8px 0' }} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: '0.85em', color: 'rgba(255,255,255,0.6)' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={state.excelUseBatch} 
+                            onChange={(e) => state.setExcelUseBatch(e.target.checked)} 
+                          />
+                          {t('excelUseBatch')}
+                        </label>
+                        {state.excelUseBatch && (
+                          <div style={{ paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.6)' }}>{t('excelBatchSize')}:</span>
+                            <input 
+                              type="number" 
+                              min="1"
+                              max="100"
+                              value={state.excelBatchSize} 
+                              onChange={(e) => state.setExcelBatchSize(Math.max(1, parseInt(e.target.value) || 1))} 
+                              style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '2px 5px' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: '0.85em', color: state.autoTrim ? '#4caf50' : 'rgba(255,255,255,0.6)', fontWeight: state.autoTrim ? '600' : 'normal' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={state.autoTrim} 
+                            onChange={(e) => state.setAutoTrim(e.target.checked)} 
+                          />
+                          {t('autoTrim')}
+                        </label>
+                      </div>
                     </div>
                   )}
                 </div>
