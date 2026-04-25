@@ -15,7 +15,6 @@ export function LabelCanvas({
   onOverflow,
   onScaleChange,
   onChangeBitmap,
-  autoTrim,
 }: {
   text: string;
   align: AlignmentType;
@@ -29,7 +28,6 @@ export function LabelCanvas({
   onOverflow: (overflowing: boolean) => void;
   onScaleChange?: (scale: number) => void;
   onChangeBitmap: (x: ImageData) => void;
-  autoTrim: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -104,7 +102,6 @@ export function LabelCanvas({
         autoShrink={autoShrink}
         autoExpand={autoExpand}
         padding={padding}
-        autoTrim={autoTrim}
       />
       <div className="canvas-wrapper">
         <div className="canvas-container">

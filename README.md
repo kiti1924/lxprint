@@ -32,18 +32,25 @@ Optimize your images for the best possible print quality on thermal paper:
     - **Threshold (Black & White)**: Ideal for logos, QR codes, and simple graphics, producing sharp, high-contrast results.
 
 ### 📊 Excel Batch Printing
-Efficiently print multiple labels at once using data from spreadsheets:
-- **Bulk Upload**: Support for `.xlsx` and `.xls` files to automate label creation.
+Efficiently print multiple labels at once using data from spreadsheets. Recent updates have introduced advanced layout control, including "Zero-Gap" continuous printing.
+
 - **Advanced Row Processing**:
     - **Loop Support**: Add a "Loop" column to your Excel file to print the same row multiple times.
     - **Segment Splitting**: Use semicolons (`;`) within a cell to generate separate labels for each segment.
-- **Formatting Options**:
+- **Formatting and Layout**:
     - **Compact Mode**: Intelligently packs keys and values to optimize space.
-    - **Auto Wrap**: Ensures long data entries are correctly wrapped within the 384px width.
-- **Precise Batch Control**:
-    - **Print Delay**: Set a custom delay (in seconds) between each label to allow the printer to cool or for easier handling.
-    - **Paper Spacing**: Configure additional paper feed (in mm) between labels for better separation.
-- **Real-time Preview**: View a scrollable list of all generated labels before initiating the print job.
+    - **Auto Wrap**: Ensures long data entries are correctly wrapped within the print width.
+- **Batching & Spacing Control**:
+    - **Batch Printing (Multi-row Consolidation)**: Combine multiple rows into a single image before sending to the printer. This eliminates transmission overhead and enables pixel-perfect spacing control. The batch size is configurable (1-100).
+    - **Print Spacing (mm)**: Set precise gaps between rows in `0.1mm` increments.
+    - **Print Delay**: Set a custom delay between batches to allow the printer to cool or for easier handling.
+- **💡 How to Achieve "Zero-Gap" Printing**:
+    By combining the following settings, you can print labels continuously with absolutely no gaps:
+    1. Check **"Combine multiple rows into a single print job"** (Batch Printing).
+    2. Set **"Print Spacing (mm)"** to **0**.
+    3. Set **"Length"** to **Auto**.
+    4. Set **"Padding (px)"** to **0**.
+- **High-Precision Preview**: The scrollable preview list accurately reflects your spacing settings in real-time, matching the actual print output.
 
 ### ⚡ Smart Connectivity & UI
 - **Web Bluetooth**: Direct connection from your browser to the printer—no drivers or extra software required.

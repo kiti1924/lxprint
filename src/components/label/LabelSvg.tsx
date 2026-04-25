@@ -25,7 +25,6 @@ export function LabelSvg({
   autoShrink: boolean;
   autoExpand: boolean;
   padding: number;
-  autoTrim: boolean;
 }) {
   const ref = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);

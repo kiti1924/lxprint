@@ -6,7 +6,7 @@ import { PreviewLabel } from "./components/label/PreviewLabel";
 import { TextAlign, LengthSelect, FontSelect, FontSizeInput, PaddingInput } from "./components/label/LabelControls";
 import { parseExcelFile, formatExcelRow } from "./lib/excelUtils";
 import { measureTextWidth } from "./lib/measureText";
-import { combineImages, trimImageData } from "./lib/imageUtils";
+import { combineImages } from "./lib/imageUtils";
 
 export function LabelMaker() {
   const state = useLabelState();
@@ -85,10 +85,8 @@ export function LabelMaker() {
     if (!isBatchPrinting || !waitingForRender || !bitmap || !printer || printerStatus.state !== "connected") return;
     
     const doPrint = async () => {
-      const processedBitmap = state.autoTrim ? trimImageData(bitmap) : bitmap;
-
       if (state.excelUseBatch) {
-        const newBuffer = [...batchBuffer, processedBitmap];
+        const newBuffer = [...batchBuffer, bitmap];
         const isLastRow = batchIndex === excelData.length - 1;
         
         if (newBuffer.length >= state.excelBatchSize || isLastRow) {
@@ -103,7 +101,7 @@ export function LabelMaker() {
       } else {
         // Single-row logic
         if (state.text.trim()) {
-          await printer.print(processedBitmap);
+          await printer.print(bitmap);
         }
         
         if (state.text.trim() && state.excelSpacing > 0) {
@@ -186,7 +184,6 @@ export function LabelMaker() {
           autoShrink={state.autoShrink}
           autoExpand={state.autoExpand}
           padding={state.padding}
-          autoTrim={state.autoTrim}
           onOverflow={setIsOverflowing}
           onScaleChange={handleScaleChange}
           onChangeBitmap={setBitmap}
@@ -363,16 +360,6 @@ export function LabelMaker() {
                 textAlign: 'left',
                 fontSize: '0.9em'
               }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", color: state.autoTrim ? '#646cff' : 'inherit', fontWeight: state.autoTrim ? '600' : 'normal' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={state.autoTrim} 
-                      onChange={(e) => state.setAutoTrim(e.target.checked)} 
-                    />
-                    {t('autoTrim')}
-                  </label>
-                </div>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={{ 
                     cursor: wakeLockSupported ? "pointer" : "default", 
@@ -573,8 +560,7 @@ export function LabelMaker() {
                                    direction={state.direction}
                                    autoShrink={state.autoShrink}
                                    autoExpand={state.autoExpand}
-                                   padding={state.autoTrim ? 0 : state.padding}
-                                   autoTrim={state.autoTrim}
+                                   padding={state.padding}
                                  />
                                </div>
                              ))}
@@ -662,16 +648,6 @@ export function LabelMaker() {
                             />
                           </div>
                         )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: '0.85em', color: state.autoTrim ? '#4caf50' : 'rgba(255,255,255,0.6)', fontWeight: state.autoTrim ? '600' : 'normal' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={state.autoTrim} 
-                            onChange={(e) => state.setAutoTrim(e.target.checked)} 
-                          />
-                          {t('autoTrim')}
-                        </label>
                       </div>
                     </div>
                   )}
