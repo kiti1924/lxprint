@@ -25,7 +25,7 @@ export function useLabelState() {
   const [excelShowKey, setExcelShowKey] = useLocalStorage("label_excelShowKey", true);
   const [excelAutoWrap, setExcelAutoWrap] = useLocalStorage("label_excelAutoWrap", true);
   const [excelUseBatch, setExcelUseBatch] = useLocalStorage("label_excelUseBatch", false);
-  const [excelBatchSize, setExcelBatchSize] = useLocalStorage("label_excelBatchSize", 10);
+  const [excelBatchSize, setExcelBatchSize] = useLocalStorage("label_excelBatchSize", 0);
 
   return {
     text, setText,

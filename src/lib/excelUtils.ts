@@ -79,9 +79,22 @@ export function parseExcelFile(file: File): Promise<any[]> {
           
           Object.entries(row).forEach(([k, v]) => {
             if (k === "Loop") return;
-            const segments = String(v).split(";");
-            columnSegments[k] = segments;
-            if (segments.length > maxSegments) maxSegments = segments.length;
+            const rawSegments = String(v).split(";");
+            const expandedSegments: string[] = [];
+            rawSegments.forEach(seg => {
+              const match = seg.match(/^(.*?)\s*\*\s*(\d+)\s*$/);
+              if (match) {
+                const text = match[1];
+                const count = parseInt(match[2], 10);
+                for (let i = 0; i < count; i++) {
+                  expandedSegments.push(text);
+                }
+              } else {
+                expandedSegments.push(seg);
+              }
+            });
+            columnSegments[k] = expandedSegments;
+            if (expandedSegments.length > maxSegments) maxSegments = expandedSegments.length;
           });
 
           // Loop through the repetitions

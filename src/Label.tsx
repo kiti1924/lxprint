@@ -88,8 +88,9 @@ export function LabelMaker() {
       if (state.excelUseBatch) {
         const newBuffer = [...batchBuffer, bitmap];
         const isLastRow = batchIndex === excelData.length - 1;
+        const shouldPrintBatch = isLastRow || (state.excelBatchSize > 0 && newBuffer.length >= state.excelBatchSize);
         
-        if (newBuffer.length >= state.excelBatchSize || isLastRow) {
+        if (shouldPrintBatch) {
           const combined = combineImages(newBuffer, Math.round(state.excelSpacing * 8));
           if (combined) {
             await printer.print(combined);
@@ -638,14 +639,19 @@ export function LabelMaker() {
                         {state.excelUseBatch && (
                           <div style={{ paddingLeft: '24px', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
                             <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.6)' }}>{t('excelBatchSize')}:</span>
-                            <input 
-                              type="number" 
-                              min="1"
-                              max="100"
-                              value={state.excelBatchSize} 
-                              onChange={(e) => state.setExcelBatchSize(Math.max(1, parseInt(e.target.value) || 1))} 
-                              style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '2px 5px' }}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <input 
+                                type="number" 
+                                min="0"
+                                max="100"
+                                value={state.excelBatchSize} 
+                                onChange={(e) => state.setExcelBatchSize(Math.max(0, parseInt(e.target.value) || 0))} 
+                                style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '2px 5px' }}
+                              />
+                              {state.excelBatchSize === 0 && (
+                                <span style={{ fontSize: '0.75em', color: '#4caf50', fontWeight: 'bold' }}>{t('auto')}</span>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>

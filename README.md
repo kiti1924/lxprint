@@ -41,7 +41,7 @@ Efficiently print multiple labels at once using data from spreadsheets. Recent u
     - **Compact Mode**: Intelligently packs keys and values to optimize space.
     - **Auto Wrap**: Ensures long data entries are correctly wrapped within the print width.
 - **Batching & Spacing Control**:
-    - **Batch Printing (Multi-row Consolidation)**: Combine multiple rows into a single image before sending to the printer. This eliminates transmission overhead and enables pixel-perfect spacing control. The batch size is configurable (1-100).
+    - **Batch Printing (Multi-row Consolidation)**: Combine multiple rows into a single image before sending to the printer. This eliminates transmission overhead and enables pixel-perfect spacing control. The batch size is configurable (1-100, set to 0 for Auto/All rows).
     - **Print Spacing (mm)**: Set precise gaps between rows in `0.1mm` increments.
     - **Print Delay**: Set a custom delay between batches to allow the printer to cool or for easier handling.
 - **💡 How to Achieve "Zero-Gap" Printing**:
