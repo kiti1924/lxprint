@@ -243,8 +243,8 @@ export function FontSizeInput({
   advanced: boolean;
 }) {
   const baseSizes = advanced
-    ? [12, 16, 20, 24, 32, 48, 64, 80, 96, 128, 160, 200]
-    : [24, 32, 48, 64, 80, 128];
+    ? [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 112, 128, 144, 160, 200]
+    : [12, 16, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128];
 
   const sizes = baseSizes.includes(fontSize) 
     ? baseSizes 

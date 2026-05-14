@@ -37,7 +37,7 @@ export function LabelMaker() {
     }
     let overflow = false;
     for (const row of excelData.slice(0, 50)) {
-      const entries = Object.entries(row).filter(([k]) => k !== "Loop");
+      const entries = Object.entries(row).filter(([k]) => k.toLowerCase() !== "loop");
       for (const [k, v] of entries) {
         const cleanV = String(v).replace(/\r?\n/g, " ");
         const segment = state.excelShowKey ? `${k}: ${cleanV}` : cleanV;

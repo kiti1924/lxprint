@@ -11,7 +11,7 @@ export interface ExcelFormatOptions {
 
 export function formatExcelRow(row: any, options: ExcelFormatOptions): string {
   const { isCompact, excelShowKey, excelAutoWrap, font, fontSize } = options;
-  const entries = Object.entries(row).filter(([k]) => k !== "Loop");
+  const entries = Object.entries(row).filter(([k]) => k.toLowerCase() !== "loop");
   
   if (!isCompact) {
     return entries.map(([k, v]) => excelShowKey ? `${k}: ${v}` : `${v}`).join("\n");
@@ -71,14 +71,15 @@ export function parseExcelFile(file: File): Promise<any[]> {
         
         const expandedData: any[] = [];
         json.forEach(row => {
-          const loopCount = parseInt(row["Loop"]) || 1;
+          const loopKey = Object.keys(row).find(k => k.toLowerCase() === "loop");
+          const loopCount = loopKey ? (parseInt(row[loopKey]) || 1) : 1;
           
           // Split columns by semicolon
           const columnSegments: Record<string, string[]> = {};
           let maxSegments = 1;
           
           Object.entries(row).forEach(([k, v]) => {
-            if (k === "Loop") return;
+            if (k.toLowerCase() === "loop") return;
             const rawSegments = String(v).split(";");
             const expandedSegments: string[] = [];
             rawSegments.forEach(seg => {
