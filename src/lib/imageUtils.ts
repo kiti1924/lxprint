@@ -143,3 +143,17 @@ export function combineImages(images: ImageData[], spacing: number = 0) {
 
   return new ImageData(result, width, totalHeight);
 }
+
+export function addTopMargin(image: ImageData, topMarginPx: number) {
+  if (topMarginPx <= 0) return image;
+  const width = image.width;
+  const height = image.height;
+  const newHeight = height + topMarginPx;
+  const result = new Uint8ClampedArray(width * newHeight * 4);
+  result.fill(0); // Transparent/white
+  
+  // Copy original image data below the margin
+  result.set(image.data, topMarginPx * width * 4);
+  
+  return new ImageData(result, width, newHeight);
+}

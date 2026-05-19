@@ -6,7 +6,7 @@ import { PreviewLabel } from "./components/label/PreviewLabel";
 import { TextAlign, LengthSelect, FontSelect, FontSizeInput, PaddingInput } from "./components/label/LabelControls";
 import { parseExcelFile, formatExcelRow } from "./lib/excelUtils";
 import { measureTextWidth } from "./lib/measureText";
-import { combineImages } from "./lib/imageUtils";
+import { combineImages, addTopMargin } from "./lib/imageUtils";
 
 export function LabelMaker() {
   const state = useLabelState();
@@ -55,7 +55,11 @@ export function LabelMaker() {
   const canPrint = !!bitmap && printerStatus.state === "connected";
 
   const print = () => {
-    if (canPrint && printer) printer.print(bitmap);
+    if (canPrint && printer && bitmap) {
+      const marginPx = Math.round(state.printTopMargin * 8);
+      const finalBitmap = marginPx > 0 ? addTopMargin(bitmap, marginPx) : bitmap;
+      printer.print(finalBitmap);
+    }
   };
 
   const startBatchPrint = () => {
@@ -93,7 +97,9 @@ export function LabelMaker() {
         if (shouldPrintBatch) {
           const combined = combineImages(newBuffer, Math.round(state.excelSpacing * 8));
           if (combined) {
-            await printer.print(combined);
+            const marginPx = Math.round(state.printTopMargin * 8);
+            const finalBitmap = marginPx > 0 ? addTopMargin(combined, marginPx) : combined;
+            await printer.print(finalBitmap);
           }
           setBatchBuffer([]);
         } else {
@@ -102,7 +108,9 @@ export function LabelMaker() {
       } else {
         // Single-row logic
         if (state.text.trim()) {
-          await printer.print(bitmap);
+          const marginPx = Math.round(state.printTopMargin * 8);
+          const finalBitmap = marginPx > 0 ? addTopMargin(bitmap, marginPx) : bitmap;
+          await printer.print(finalBitmap);
         }
         
         if (state.text.trim() && state.excelSpacing > 0) {
@@ -185,7 +193,6 @@ export function LabelMaker() {
           autoShrink={state.autoShrink}
           autoExpand={state.autoExpand}
           padding={state.padding}
-          printTopMargin={state.printTopMargin}
           onOverflow={setIsOverflowing}
           onScaleChange={handleScaleChange}
           onChangeBitmap={setBitmap}
@@ -429,9 +436,9 @@ export function LabelMaker() {
                   <input 
                     type="number" 
                     min="0"
-                    step="1"
+                    step="0.1"
                     value={state.printTopMargin} 
-                    onChange={(e) => state.setPrintTopMargin(Math.max(0, parseInt(e.target.value) || 0))} 
+                    onChange={(e) => state.setPrintTopMargin(Math.max(0, parseFloat(e.target.value) || 0))} 
                     style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '4px 6px', outline: 'none' }}
                   />
                 </div>
