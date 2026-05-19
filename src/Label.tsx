@@ -185,6 +185,7 @@ export function LabelMaker() {
           autoShrink={state.autoShrink}
           autoExpand={state.autoExpand}
           padding={state.padding}
+          printTopMargin={state.printTopMargin}
           onOverflow={setIsOverflowing}
           onScaleChange={handleScaleChange}
           onChangeBitmap={setBitmap}
@@ -423,6 +424,17 @@ export function LabelMaker() {
                     {t('advancedFonts')}
                   </label>
                 </div>
+                <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                  <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.8)' }}>{t('printTopMargin')}:</span>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    value={state.printTopMargin} 
+                    onChange={(e) => state.setPrintTopMargin(Math.max(0, parseInt(e.target.value) || 0))} 
+                    style={{ width: '60px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', padding: '4px 6px', outline: 'none' }}
+                  />
+                </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{t('direction')}:</span>
                   <div className="orientation-toggle" style={{ padding: '3px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', gap: '4px' }}>
@@ -460,7 +472,7 @@ export function LabelMaker() {
                         <span style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.6)' }}>{t('excelFile')}:</span>
                         <input 
                           type="file" 
-                          accept=".xlsx, .xls" 
+                          accept=".xlsx, .xls, .csv, .tsv, .txt, .ods" 
                           onChange={handleExcelUpload} 
                           style={{ fontSize: '0.8em', width: '150px' }}
                         />

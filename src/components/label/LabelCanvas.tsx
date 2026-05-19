@@ -12,6 +12,7 @@ export function LabelCanvas({
   autoShrink,
   autoExpand,
   padding,
+  printTopMargin,
   onOverflow,
   onScaleChange,
   onChangeBitmap,
@@ -25,6 +26,7 @@ export function LabelCanvas({
   autoShrink: boolean;
   autoExpand: boolean;
   padding: number;
+  printTopMargin: number;
   onOverflow: (overflowing: boolean) => void;
   onScaleChange?: (scale: number) => void;
   onChangeBitmap: (x: ImageData) => void;
@@ -69,9 +71,10 @@ export function LabelCanvas({
         xOffset = canvasWidth - width;
       }
 
-      let yOffset = 0;
+      const topMarginPx = printTopMargin * 8;
+      let yOffset = topMarginPx;
       if (length && height < canvasHeight) {
-        yOffset = (canvasHeight - height) / 2;
+        yOffset = (canvasHeight - height) / 2 + topMarginPx;
       }
 
       context.drawImage(image, xOffset, yOffset, width, height);
@@ -86,7 +89,7 @@ export function LabelCanvas({
       isCurrent = false;
       URL.revokeObjectURL(url);
     };
-  }, [svgData, length, align, width, height, onChangeBitmap]);
+  }, [svgData, length, align, width, height, onChangeBitmap, printTopMargin]);
 
   return (
     <>
@@ -108,7 +111,7 @@ export function LabelCanvas({
           <canvas
             ref={ref}
             width={384}
-            height={length || (height > 0 ? height : 1)}
+            height={length || ((height > 0 ? height : 1) + printTopMargin * 8)}
             style={{ margin: 0, backgroundColor: "white", display: "block" }}
           />
         </div>
